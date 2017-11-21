@@ -11,50 +11,41 @@ SET CHARACTER SET utf8;
 /* *****************************************************************************
 // Remove old database
 // ****************************************************************************/
-DROP DATABASE IF EXISTS gowebapp;
+DROP DATABASE IF EXISTS Collector;
 
 /* *****************************************************************************
 // Create new database
 // ****************************************************************************/
-CREATE DATABASE gowebapp DEFAULT CHARSET = utf8 COLLATE = utf8_unicode_ci;
-USE gowebapp;
+CREATE DATABASE Collector DEFAULT CHARSET = utf8 COLLATE = utf8_unicode_ci;
+USE Collector;
 
 /* *****************************************************************************
 // Create the tables
 // ****************************************************************************/
-CREATE TABLE user_status (
-    id TINYINT(1) UNSIGNED NOT NULL AUTO_INCREMENT,
-    
-    status VARCHAR(25) NOT NULL,
-    
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    deleted TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
-    
-    PRIMARY KEY (id)
+CREATE TABLE agency (
+
 );
 
 CREATE TABLE user (
-    id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    
-    first_name VARCHAR(50) NOT NULL,
-    last_name VARCHAR(50) NOT NULL,
-    email VARCHAR(100) NOT NULL,
-    password CHAR(60) NOT NULL,
-    
-    status_id TINYINT(1) UNSIGNED NOT NULL DEFAULT 1,
-    
+    id INT(12) UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_name VARCHAR(50) NOT NULL,
+    password VARCHAR(60) NOT NULL,
+    gender TINYINT(1) UNSIGNED DEFAULT 0,
+    birth VARCHAR(50),
+    mobile VARCHAR(50),
+    agency_id INT(12) UNSIGNED NOT NULL,
+    role VARCHAR(20) NOT NULL DEFAULT "customer",
+    priority VARCHAR(20) NOT NULL DEFAULT "123",
+    status TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    deleted TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
-    
-    UNIQUE KEY (email),
-    CONSTRAINT `f_user_status` FOREIGN KEY (`status_id`) REFERENCES `user_status` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-    
+    last_ontime DATETIME,
+    last_onip VARCHAR(50) DEFAULT "",
+    UNIQUE KEY (agency_id),
     PRIMARY KEY (id)
 );
 
-INSERT INTO `user_status` (`id`, `status`, `created_at`, `updated_at`, `deleted`) VALUES
+INSERT INTO `user` (`id`, `user_name`, `password`, `gender`, `birth`, `mobile`, `agency_id`, `role`, `priority`, `status`, `status`) VALUES
 (1, 'active',   CURRENT_TIMESTAMP,  CURRENT_TIMESTAMP,  0),
 (2, 'inactive', CURRENT_TIMESTAMP,  CURRENT_TIMESTAMP,  0);
 
