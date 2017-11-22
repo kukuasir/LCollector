@@ -11,12 +11,17 @@ import (
 	sw "./controller"
 	"log"
 	"net/http"
+	"LCollector/config"
 )
 
 func main() {
+
 	log.Printf("Server started")
+
+	// 读取配置文件
+	config.ReadSystemConfig()
 
 	router := sw.NewRouter()
 	
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe(":" + config.ServerPort, router))
 }
