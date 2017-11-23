@@ -46,6 +46,4 @@ func ConfigGet() {
 		fmt.Println(err)
 		return
 	}
-
-	fmt.Println(config.Server.Port)
 }

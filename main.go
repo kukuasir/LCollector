@@ -9,9 +9,9 @@ import (
 	//    sw "github.com/myname/myrepo/go"
 	//
 	sw "./controller"
+	"LCollector/config"
 	"log"
 	"net/http"
-	"LCollector/config"
 	"strings"
 )
 
