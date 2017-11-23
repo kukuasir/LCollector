@@ -1,7 +1,7 @@
 package util
 
-func Auth(username string, password string) bool {
-	if len(username) == 0 || len(password) == 0 {
+func Auth(uname string, pwd string) bool {
+	if len(uname) == 0 || len(pwd) == 0 {
 		return false
 	}
 	return true

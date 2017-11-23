@@ -1,0 +1,29 @@
+
+# This is a TOML document.
+
+title = "LCollector Config TOML"
+
+[server]
+port = "8080"
+
+[mysql]
+host = "106.14.2.153"
+port = "27017"
+name = "Collector"
+username = ""
+password = ""
+connection_max = 5000
+
+[mongodb]
+host = "106.14.2.153"
+port = "27017"
+name = "Collector"
+username = ""
+password = ""
+
+[logger]
+enable_operate_log = true  #操作日志开关
+enable_message_log = true  #消息日志开关
+
+[token]
+valid_secs = 7200  #设置Token有效期默认为2小时

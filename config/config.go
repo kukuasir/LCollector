@@ -1,34 +1,51 @@
 package config
 
 import (
-	"github.com/larspensjo/config"
 	"fmt"
+	"github.com/BurntSushi/toml"
 )
 
-var ServerPort string
+var SysConfig = TomlConfig{}
 
-var EnableOperateLog bool
-var EnableMessageLog bool
+type TomlConfig struct {
+	Server  server      `toml:"server"`
+	Mysql   dbConfig    `toml:"mysql"`
+	MongoDB dbConfig    `toml:"mongodb"`
+	Logger  logConfig   `toml:"logger"`
+	Token   tokenConfig `toml:"token"`
+}
 
-var TokenValidTime int
+type server struct {
+	Port string `toml:"port"`
+}
 
-func ReadSystemConfig() {
+type dbConfig struct {
+	Host     string `toml:"host"`
+	Port     string `toml:"port"`
+	DBName   string `toml:"name"`
+	UserName string `toml:"username"`
+	Password string `toml:"password"`
+	ConnMax  int64  `toml:"connection_max"`
+}
+
+type logConfig struct {
+	EnableOperateLog bool `toml:"enable_operate_log"`
+	EnableMessageLog bool `toml:"enable_message_log"`
+}
+
+type tokenConfig struct {
+	ValidTime int64 `toml:"valid_secs"`
+}
+
+func ConfigGet() {
 
 	fmt.Println("Read Config...")
 
-	c, _ := config.ReadDefault("config.cfg")
+	var config TomlConfig
+	if _, err := toml.DecodeFile("config/config.toml", &config); err != nil {
+		fmt.Println(err)
+		return
+	}
 
-	ServerPort, _ = c.String("SERVER", "SERVER_PORT")
-
-	host, _ := c.String("MONGODB", "DB_HOST")
-	port, _ := c.String("MONGODB", "DB_PORT")
-	name, _ := c.String("MONGODB", "DB_NAME")
-	username, _ := c.String("MONGODB", "DB_USERNAME")
-	//password, _ := c.String("MONGODB", "DB_PASSWORD")
-	fmt.Println(username + "@" + host + ":" + port + "/" + name)
-
-	EnableOperateLog, _ = c.Bool("LOG", "ENABLE_OPERATE_LOG")
-	EnableMessageLog, _ = c.Bool("LOG", "ENABLE_MESSAGE_LOG")
-
-	TokenValidTime, _ = c.Int("TOKEN", "TOKEN_VALID_TIME")
+	fmt.Println(config.Server.Port)
 }

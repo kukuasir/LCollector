@@ -12,6 +12,7 @@ import (
 	"log"
 	"net/http"
 	"LCollector/config"
+	"strings"
 )
 
 func main() {
@@ -19,9 +20,10 @@ func main() {
 	log.Printf("Server started")
 
 	// 读取配置文件
-	config.ReadSystemConfig()
+	config.ConfigGet()
 
 	router := sw.NewRouter()
-	
-	log.Fatal(http.ListenAndServe(":" + config.ServerPort, router))
+
+	port := strings.Join([]string{":"}, config.SysConfig.Server.Port)
+	log.Fatal(http.ListenAndServe(port, router))
 }
