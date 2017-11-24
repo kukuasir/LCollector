@@ -1,0 +1,811 @@
+# Swagger LCollector
+swagger: '2.0'
+
+info:
+  version: 1.0.0
+  title: 综合数据管理系统
+  description: This is a LCollector API.
+
+tags:
+- name: User
+  description: 获取用户信息及对用户的操作
+- name: Device
+  description: 获取设备信息及对设备的操作
+- name: Agency
+  description: 获取组织机构信息及对组织机构进行操作
+- name: Log
+  description: 获取日志列表
+- name: Login
+  description: 登录相关操作
+- name: App
+  description: 获取系统相关信息
+
+paths:
+  # 获取软件信息
+  /getAppInfo:
+    get:
+      tags:
+      - App
+      summary: Get app related info.
+      description: Get app related info.
+      operationId: getAppInfo
+      responses:
+        200:
+          description: 操作成功，返回成功信息
+          schema:
+            properties:
+              return:
+                $ref: "#/definitions/Response"
+              data:
+                $ref: "#/definitions/AppInfo"
+  # 用户登录
+  /login:
+    post:
+      tags:
+      - Login
+      summary: 用户登录
+      description: 用户登录操作
+      operationId: login
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: body
+        in: body
+        description: Use username and password to login
+        schema:
+          required: 
+            - user_name
+            - password
+          properties:
+            user_name:
+              type: string
+            password:
+              type: string
+      responses:
+        200:
+          description: 登录成功，返回登录信息
+          schema:
+            properties:
+              return:
+                $ref: "#/definitions/Response"
+              data:
+                $ref: "#/definitions/LoginRet"
+  # 添加用户
+  /user/add:
+    post:
+      tags:
+      - User
+      summary:  添加用户信息
+      description: 添加用户数据
+      operationId: addUser
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        description: Add a new user to database
+        required: true
+        schema:
+          $ref: "#/definitions/UserReq"
+      responses:
+        200:
+          description: 操作成功，返回成功信息
+          schema:
+            properties:
+              return:
+                $ref: "#/definitions/Response"
+  # 删除用户
+  /user/delete:
+    get:
+      tags: 
+      - User
+      summary: 删除指定的用户
+      description: 指定设备ID，删除对应用户(用户状态置为无效)
+      operationId: deleteUser
+      parameters:
+        - $ref: "#/parameters/OperatorID"
+        - $ref: "#/parameters/UserID"
+      responses:
+        200:
+          description: 操作成功，返回成功信息
+          schema:
+            properties:
+              return:
+                $ref: "#/definitions/Response"
+  # 修改用户信息
+  /user/edit:
+    post:
+      tags: 
+      - User
+      summary: 修改用户信息
+      description: 指定用户ID，修改对应的用户信息
+      operationId: editUser
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        description: Edit user info
+        required: true
+        schema:
+          $ref: "#/definitions/UserReq"
+      responses:
+        200:
+          description: 操作成功，返回成功信息
+          schema:
+            properties:
+              return:
+                $ref: "#/definitions/Response"
+  # 修改用户密码
+  /user/updatePwd:
+    post:
+      tags: 
+      - User
+      summary: 修改用户密码
+      description: 根据传入的用户ID，修改指定的用户密码
+      operationId: updatePwd
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: body
+        in: body
+        description: 根据用户ID修改密码
+        schema:
+          required: 
+            - operator_id
+            - user_id
+            - password
+          properties:
+            operator_id:
+              type: string
+            user_id:
+              type: string
+            password:
+              type: string
+      responses:
+        200:
+          description: 操作成功，返回成功信息
+          schema:
+            properties:
+              return:
+                $ref: "#/definitions/Response"
+  # 获取指定的用户信息
+  /user/view:
+    get:
+      tags: 
+      - User
+      summary: 查询用户信息
+      description: 根据传入的用户ID查询指定的用户信息
+      operationId: getUserInfo
+      parameters:
+      - $ref: "#/parameters/OperatorID"
+      - $ref: "#/parameters/UserID"
+      responses:
+        200:
+          description: 查询成功，返回用户信息
+          schema:
+            properties:
+              return:
+                $ref: "#/definitions/Response"
+              data:
+                $ref: "#/definitions/User"
+  # 获取用户列表
+  /user/list:
+    get:
+      tags: 
+      - User
+      summary: 查询用户列表 
+      description: 根据用户的角色查询用户列表信息
+      operationId: fetchUserList
+      parameters:
+      - $ref: "#/parameters/OperatorID"
+      - $ref: "#/parameters/PageNumber"
+      - $ref: "#/parameters/PageSize"
+      responses:
+        200:
+          description: 查询成功，返回用户列表信息
+          schema:
+            type: object
+            properties:
+              return:
+                $ref: "#/definitions/Response"
+              data:
+                type: array
+                items:
+                  $ref: "#/definitions/User"
+
+  # 添加设备
+  /device/add:
+    post:
+      tags:
+      - Device
+      summary:  添加设备信息 
+      description: 添加设备数据
+      operationId: addDevice
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        description: Add a new device to database
+        required: true
+        schema:
+          $ref: "#/definitions/DeviceReq"
+      responses:
+        200:
+          description: 操作成功，返回成功信息
+          schema:
+            properties:
+              return:
+                $ref: "#/definitions/Response"
+  # 删除设备
+  /device/delete:
+    get:
+      tags: 
+      - Device
+      summary: 删除指定的设备
+      description: 指定设备编号，删除对应设备(设备状态置为无效)
+      operationId: deleteDevice
+      parameters:
+        - $ref: "#/parameters/OperatorID"
+        - $ref: "#/parameters/DeviceID"
+      responses:
+        200:
+          description: 操作成功，返回成功信息
+          schema:
+            properties:
+              return:
+                $ref: "#/definitions/Response"
+  # 修改设备信息
+  /device/edit:
+    post:
+      tags: 
+      - Device
+      summary: 修改设备信息
+      description: 指定设备编号，修改对应设备信息
+      operationId: editDevice
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        description: Edit device info
+        required: true
+        schema:
+          $ref: "#/definitions/DeviceReq"
+      responses:
+        200:
+          description: 操作成功，返回成功信息
+          schema:
+            properties:
+              return:
+                $ref: "#/definitions/Response"
+  # 获取指定的用户信息
+  /device/view:
+    get:
+      tags: 
+      - Device
+      summary: 查询设备信息
+      description: 根据传入的设备ID查询指定的设备信息
+      operationId: getDeviceInfo
+      parameters:
+      - $ref: "#/parameters/OperatorID"
+      - $ref: "#/parameters/DeviceID"
+      responses:
+        200:
+          description: 查询成功，返回设备信息
+          schema:
+            properties:
+              return:
+                $ref: "#/definitions/Response"
+              data:
+                $ref: "#/definitions/Device"
+  # 获取设备列表
+  /device/list:
+    get:
+      tags: 
+      - Device
+      summary: 查询设备列表 
+      description: 根据用户的角色查询设备列表信息
+      operationId: fetchDeviceList
+      parameters:
+      - $ref: "#/parameters/OperatorID"
+      - $ref: "#/parameters/PageNumber"
+      - $ref: "#/parameters/PageSize"
+      responses:
+        200:
+          description: 查询成功，返回设备列表信息
+          schema:
+            type: object
+            properties:
+              return:
+                $ref: "#/definitions/Response"
+              data:
+                type: array
+                items:
+                  $ref: "#/definitions/Device"
+  
+  # 添加组织机构
+  /agency/add:
+    post:
+      tags:
+      - Agency
+      summary:  添加组织机构信息 
+      description: 添加组织机构数据
+      operationId: addAgency
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        description: Add a new agency to database
+        required: true
+        schema:
+          $ref: "#/definitions/AgencyReq"
+      responses:
+        200:
+          description: 操作成功，返回成功信息
+          schema:
+            properties:
+              return:
+                $ref: "#/definitions/Response"
+  # 删除组织机构
+  /agency/delete:
+    get:
+      tags: 
+      - Agency
+      summary: 删除指定的组织机构
+      description: 指定组织机构ID，删除对应的组织机构(组织机构状态置为无效)
+      operationId: deleteAgency
+      parameters:
+        - $ref: "#/parameters/OperatorID"
+        - $ref: "#/parameters/AgencyID"
+      responses:
+        200:
+          description: 操作成功，返回成功信息
+          schema:
+            properties:
+              return:
+                $ref: "#/definitions/Response"
+  # 修改组织机构信息
+  /agency/edit:
+    post:
+      tags: 
+      - Agency
+      summary: 修改组织机构信息
+      description: 指定组织机构ID，修改对应的组织机构信息
+      operationId: editAgency
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        description: Edit agency info
+        required: true
+        schema:
+          $ref: "#/definitions/AgencyReq"
+      responses:
+        200:
+          description: 操作成功，返回成功信息
+          schema:
+            properties:
+              return:
+                $ref: "#/definitions/Response"
+  # 获取指定的组织机构信息
+  /agency/view:
+    get:
+      tags: 
+      - Agency
+      summary: 查询组织机构信息
+      description: 根据传入的ID查询指定的组织机构信息
+      operationId: getAgencyInfo
+      parameters:
+      - $ref: "#/parameters/OperatorID"
+      - $ref: "#/parameters/AgencyID"
+      responses:
+        200:
+          description: 查询成功，返回组织机构信息
+          schema:
+            properties:
+              return:
+                $ref: "#/definitions/Response"
+              data:
+                $ref: "#/definitions/Agency"
+  # 获取组织机构列表
+  /agency/list:
+    get:
+      tags: 
+      - Agency
+      summary: 查询组织机构列表 
+      description: 只有超级管理员，才有权限查询组织机构列表
+      operationId: fetchAgencyList
+      parameters:
+      - $ref: "#/parameters/OperatorID"
+      - $ref: "#/parameters/PageNumber"
+      - $ref: "#/parameters/PageSize"
+      responses:
+        200:
+          description: 查询成功，返回组织机构列表信息
+          schema:
+            type: object
+            properties:
+              return:
+                $ref: "#/definitions/Response"
+              data:
+                type: array
+                items:
+                  $ref: "#/definitions/Agency"
+
+  # 获取操作日志
+  /log/operate:
+    get:
+      tags: 
+      - Log
+      summary: 查询操作日志列表 
+      description: 分页获取操作日志
+      operationId: fetchOperateLogList
+      parameters:
+      - $ref: "#/parameters/OperatorID"
+      - $ref: "#/parameters/PageNumber"
+      - $ref: "#/parameters/PageSize"
+      responses:
+        200:
+          description: 查询成功，返回操作日志分页列表
+          schema:
+            type: object
+            properties:
+              return:
+                $ref: "#/definitions/Response"
+              data:
+                type: array
+                items:
+                  $ref: "#/definitions/OperateLog"
+  # 获取消息日志
+  /log/message:
+    get:
+      tags: 
+      - Log
+      summary: 查询消息日志列表 
+      description: 分页获取消息日志
+      operationId: fetchMessageLogList
+      parameters:
+      - $ref: "#/parameters/OperatorID"
+      - $ref: "#/parameters/PageNumber"
+      - $ref: "#/parameters/PageSize"
+      responses:
+        200:
+          description: 查询成功，返回操作日志分页列表
+          schema:
+            type: object
+            properties:
+              return:
+                $ref: "#/definitions/Response"
+              data:
+                type: array
+                items:
+                  $ref: "#/definitions/MessageLog"
+
+definitions:
+  
+  ##########Request Objects##########
+  UserReq:
+    type: object
+    required:
+    - operator_id
+    - user_name
+    properties:
+      operator_id:
+        type: string
+      user_id:
+        type: string
+      user_name:
+        type: string
+      gender:
+        type: integer
+        format: int64
+      birth:
+        type: string
+      mobile:
+        type: string
+      agency_id:
+        type: string
+      role:
+        type: string
+      priority:
+        type: string
+      status:
+        type: integer
+        format: int64
+  
+  DeviceReq:
+    type: object
+    required:
+    - operator_id
+    - device_id
+    properties:
+      operator_id:
+        type: string
+      device_id:
+        type: string
+      device_name:
+        type: string
+      agency_id:
+        type: string
+      latitude:
+        type: number
+        format: float64
+      longitude:
+        type: number
+        format: float64
+      status:
+        type: integer
+        format: int64
+    
+  AgencyReq:
+    type: object
+    required:
+    - operator_id
+    - agency_id
+    properties:
+      operator_id:
+        type: string
+      agency_id:
+        type: string
+      agency_name:
+        type: string
+      contact_name:
+        type: string
+      contact_number:
+        type: string
+      contact_addr:
+        type: string
+      status:
+        type: integer
+        format: int64
+  
+  ##########Response Objects##########
+  # 返回结果
+  Response:
+    type: object
+    required:
+    - status
+    - message
+    properties:
+      status:
+        type: integer
+        format: int64
+      message:
+        type: string
+      token:
+        type: string
+      count:
+        type: integer
+        format: int64
+  # 登录成功返回的信息
+  LoginRet:
+    type: object
+    required:
+    - user_id
+    - user_name
+    properties:
+      user_id:
+        type: string
+      user_name:
+        type: string
+      role:
+        type: string
+      paths:
+        type: array
+        items:
+          $ref: "#/definitions/Path"
+  # 资源路径
+  Path:
+    type: object
+    properties:
+      parent:
+        type: string
+      children:
+        type: array
+        items:
+          $ref: "#/definitions/Children"
+  # 子节点
+  Children:
+    type: object
+    properties:
+      name:
+        type: string
+      resource:
+        type: string
+  # 用户Model
+  User:
+    type: object
+    required:
+    - user_id
+    properties:
+      user_id:
+        type: string
+      user_name:
+        type: string
+      gender:
+        type: integer
+        format: int64
+      birth:
+        type: string
+      mobile:
+        type: string
+      agency_id:
+        type: string
+      role:
+        type: string
+      priority:
+        type: string
+      last_time:
+        type: integer
+        format: int64
+      last_onip:
+        type: string
+      status:
+        type: integer
+        format: int64
+      update_time:
+        type: integer
+        format: int64
+  # 设备Model
+  Device:
+    type: object
+    required:
+    - device_id
+    properties:
+      device_id:
+        type: string
+      device_name:
+        type: string
+      agency_id:
+        type: string
+      latitude:
+        type: number
+        format: float64
+      longitude:
+        type: number
+        format: float64
+      status:
+        type: integer
+        format: int64
+      update_time:
+        type: integer
+        format: int64
+  # 组织机构Model
+  Agency:
+    type: object
+    required: 
+    - agency_id
+    properties:
+      agency_id:
+        type: string
+      agency_name:
+        type: string
+      contact_name:
+        type: string
+      contact_number:
+        type: string
+      contact_addr:
+        type: string
+      status:
+        type: integer
+        format: int64
+      update_time:
+        type: integer
+        format: int64
+  # 操作日志Model
+  OperateLog:
+    type: object
+    properties:
+      operator_id:
+        type: string
+      agency_id:
+        type: string
+      agency_name:
+        type: string
+      content:
+        type: string
+      time:
+        type: integer
+        format: int64
+      on_ip:
+        type: string
+  # 消息日志Model
+  MessageLog:
+    type: object
+    properties:
+      device_id:
+        type: string
+      agency_id:
+        type: string
+      agency_name:
+        type: string
+      content:
+        type: string
+      time:
+        type: integer
+        format: int64
+      on_ip:
+        type: string
+  # 系统配置Model
+  AppInfo:
+    type: object
+    properties:
+      name:
+        type: string
+      logo:
+        type: string
+      summary:
+        type: string
+      copyright:
+        type: string
+      qq:
+        type: string
+      wechat:
+        type: string
+      website:
+        type: string
+
+parameters:
+  OperatorID:
+    name: operator_id
+    in: query
+    type: string
+    required: true
+    description: 操作人员的ID
+  UserID:
+    name: user_id
+    in: query
+    type: string
+    required: true
+    description: 被操作人(目标用户)的ID
+  DeviceID:
+    name: device_id
+    in: query
+    type: string
+    required: true
+    description: 设备ID
+  AgencyID:
+    name: agency_id
+    in: query
+    type: string
+    required: true
+    description: 组织机构ID
+  PageNumber:
+    name: page
+    in: query
+    type: integer
+    format: int64
+    description: 当前页数
+  PageSize:
+    name: size
+    in: query
+    type: integer
+    format: int64
+    description: 每页返回的个数(默认一页为20条)
+
+# Added by API Auto Mocking Plugin
+host: virtserver.swaggerhub.com
+basePath: /kukuasir/LCollector/1.0.0
+schemes:
+ - https
+ - http

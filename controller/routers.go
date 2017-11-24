@@ -45,136 +45,143 @@ var routes = Routes{
 	},
 
 	Route{
-		"AgencyAddPost",
+		"AddAgency",
 		"POST",
 		"/agency/add",
-		AgencyAddPost,
+		AddAgency,
 	},
 
 	Route{
-		"AgencyDeleteGet",
+		"DeleteAgency",
 		"GET",
 		"/agency/delete",
-		AgencyDeleteGet,
+		DeleteAgency,
 	},
 
 	Route{
-		"AgencyEditPost",
+		"EditAgency",
 		"POST",
 		"/agency/edit",
-		AgencyEditPost,
+		EditAgency,
 	},
 
 	Route{
-		"AgencyListGet",
+		"FetchAgencyList",
 		"GET",
 		"/agency/list",
-		AgencyListGet,
+		FetchAgencyList,
 	},
 
 	Route{
-		"AgencyViewGet",
+		"GetAgencyInfo",
 		"GET",
 		"/agency/view",
-		AgencyViewGet,
+		GetAgencyInfo,
 	},
 
 	Route{
-		"DeviceAddPost",
+		"GetAppInfo",
+		"GET",
+		"/getAppInfo",
+		GetAppInfo,
+	},
+
+	Route{
+		"AddDevice",
 		"POST",
 		"/device/add",
-		DeviceAddPost,
+		AddDevice,
 	},
 
 	Route{
-		"DeviceDeleteGet",
+		"DeleteDevice",
 		"GET",
 		"/device/delete",
-		DeviceDeleteGet,
+		DeleteDevice,
 	},
 
 	Route{
-		"DeviceEditPost",
+		"EditDevice",
 		"POST",
 		"/device/edit",
-		DeviceEditPost,
+		EditDevice,
 	},
 
 	Route{
-		"DeviceListGet",
+		"FetchDeviceList",
 		"GET",
 		"/device/list",
-		DeviceListGet,
+		FetchDeviceList,
 	},
 
 	Route{
-		"DeviceViewGet",
+		"GetDeviceInfo",
 		"GET",
 		"/device/view",
-		DeviceViewGet,
+		GetDeviceInfo,
 	},
 
 	Route{
-		"LogMessageGet",
+		"FetchMessageLogList",
 		"GET",
 		"/log/message",
-		LogMessageGet,
+		FetchMessageLogList,
 	},
 
 	Route{
-		"LogOperateGet",
+		"FetchOperateLogList",
 		"GET",
 		"/log/operate",
-		LogOperateGet,
+		FetchOperateLogList,
 	},
 
 	Route{
-		"UserAddPost",
+		"Login",
+		"POST",
+		"/login",
+		Login,
+	},
+
+	Route{
+		"AddUser",
 		"POST",
 		"/user/add",
-		UserAddPost,
+		AddUser,
 	},
 
 	Route{
-		"UserDeleteGet",
+		"DeleteUser",
 		"GET",
 		"/user/delete",
-		UserDeleteGet,
+		DeleteUser,
 	},
 
 	Route{
-		"UserEditPost",
+		"EditUser",
 		"POST",
 		"/user/edit",
-		UserEditPost,
+		EditUser,
 	},
 
 	Route{
-		"UserListGet",
+		"FetchUserList",
 		"GET",
 		"/user/list",
-		UserListGet,
+		FetchUserList,
 	},
 
 	Route{
-		"UserLoginPost",
-		"POST",
-		"/user/login",
-		UserLoginPost,
-	},
-
-	Route{
-		"UserUpdatePwdPost",
-		"POST",
-		"/user/updatePwd",
-		UserUpdatePwdPost,
-	},
-
-	Route{
-		"UserViewGet",
+		"GetUserInfo",
 		"GET",
 		"/user/view",
-		UserViewGet,
+		GetUserInfo,
+	},
+
+	Route{
+		"UpdatePwd",
+		"POST",
+		"/user/updatePwd",
+		UpdatePwd,
 	},
 
 }

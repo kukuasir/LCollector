@@ -8,27 +8,27 @@ type Device struct {
 
 }
 
-func DeviceAddPost(w http.ResponseWriter, r *http.Request) {
+func AddDevice(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
 }
 
-func DeviceDeleteGet(w http.ResponseWriter, r *http.Request) {
+func DeleteDevice(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
 }
 
-func DeviceEditPost(w http.ResponseWriter, r *http.Request) {
+func EditDevice(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
 }
 
-func DeviceListGet(w http.ResponseWriter, r *http.Request) {
+func FetchDeviceList(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
 }
 
-func DeviceViewGet(w http.ResponseWriter, r *http.Request) {
+func GetDeviceInfo(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
 }

@@ -8,37 +8,32 @@ type User struct {
 
 }
 
-func UserLoginPost(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-}
-
-func UserAddPost(w http.ResponseWriter, r *http.Request) {
+func AddUser(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
 }
 
-func UserDeleteGet(w http.ResponseWriter, r *http.Request) {
+func DeleteUser(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
 }
 
-func UserEditPost(w http.ResponseWriter, r *http.Request) {
+func EditUser(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
 }
 
-func UserListGet(w http.ResponseWriter, r *http.Request) {
+func FetchUserList(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
 }
 
-func UserUpdatePwdPost(w http.ResponseWriter, r *http.Request) {
+func GetUserInfo(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
 }
 
-func UserViewGet(w http.ResponseWriter, r *http.Request) {
+func UpdatePwd(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
 }
