@@ -1,9 +1,9 @@
 package controller
 
 import (
-	"net/http"
 	"fmt"
 	"github.com/gorilla/mux"
+	"net/http"
 )
 
 type Route struct {
@@ -183,5 +183,4 @@ var routes = Routes{
 		"/user/updatePwd",
 		UpdatePwd,
 	},
-
 }
