@@ -1,17 +1,16 @@
 package config
 
 import (
-	"strconv"
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"strconv"
 )
 
 /** 自定义错误码 */
 const (
-
 	UnkownStateError         = -100 // 未知错误
-	UnsupportedRequestMethod = -101  // 不支持的方法
+	UnsupportedRequestMethod = -101 // 不支持的方法
 
 	AuthenticateFailure      = -1001 // 鉴权失败
 	InvalidParameterValue    = -1002 // 数据格式有误
@@ -48,7 +47,7 @@ type NSError struct {
 
 var errors []NSError
 
-func ErrorGet() {
+func InitErrors() {
 
 	fmt.Println("Read Error...")
 
@@ -66,9 +65,9 @@ func ErrorGet() {
 }
 
 func NewSuccess(message string) *NSError {
-	return &NSError {
-		Code: Success,
-		Name: "Success",
+	return &NSError{
+		Code:    Success,
+		Name:    "Success",
 		Message: message,
 	}
 }
@@ -83,5 +82,5 @@ func NewError(code int64) *NSError {
 }
 
 func (e *NSError) Error() string {
-	return "Code: " + strconv.FormatInt(e.Code, 10) + "," + "Message: " + e.Message
+	return "Code=" + strconv.FormatInt(e.Code, 10) + ", " + "Name=" + e.Name + ", " + "Message=" + e.Message
 }

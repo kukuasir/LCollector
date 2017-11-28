@@ -5,39 +5,47 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-var SysConfig = TomlConfig{}
+var App appConfig
+var System systemConfig
+var Mongo mongoConfig
+var Logger logConfig
 
 type TomlConfig struct {
-	Server  server      `toml:"server"`
-	Mysql   dbConfig    `toml:"mysql"`
-	MongoDB dbConfig    `toml:"mongodb"`
-	Logger  logConfig   `toml:"logger"`
-	Token   tokenConfig `toml:"token"`
+	AppConfig    appConfig    `toml:"app"`
+	SystemConfig systemConfig `toml:"system"`
+	MongoConfig  mongoConfig  `toml:"mongo"`
+	LogConfig    logConfig    `toml:"logger"`
 }
 
-type server struct {
-	Port string `toml:"port"`
+type appConfig struct {
+	Name      string `toml:"name"`
+	Logo      string `toml:"logo"`
+	Version   string `toml:"version"`
+	Copyright string `toml:"copyright"`
+	QQ        string `toml:"qq"`
+	Wechat    string `toml:"wechat"`
+	Website   string `toml:"website"`
 }
 
-type dbConfig struct {
+type systemConfig struct {
+	ServerPort string `toml:"server_port"`
+	ValidTimes int64  `toml:"valid_times"`
+}
+
+type mongoConfig struct {
 	Host     string `toml:"host"`
-	Port     string `toml:"port"`
-	DBName   string `toml:"name"`
+	Database string `toml:"database"`
 	UserName string `toml:"username"`
 	Password string `toml:"password"`
-	ConnMax  int64  `toml:"connection_max"`
 }
 
 type logConfig struct {
-	EnableOperateLog bool `toml:"enable_operate_log"`
-	EnableMessageLog bool `toml:"enable_message_log"`
+	EnableOperateLog bool   `toml:"enable_operate_log"`
+	EnableMessageLog bool   `toml:"enable_message_log"`
+	LogPath          string `toml:"log_path"`
 }
 
-type tokenConfig struct {
-	ValidTime int64 `toml:"valid_secs"`
-}
-
-func ConfigGet() {
+func InitConfig() {
 
 	fmt.Println("Read Config...")
 
@@ -46,4 +54,9 @@ func ConfigGet() {
 		fmt.Println(err)
 		return
 	}
+
+	App = config.AppConfig
+	System = config.SystemConfig
+	Mongo = config.MongoConfig
+	Logger = config.LogConfig
 }

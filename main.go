@@ -12,7 +12,6 @@ import (
 	"LCollector/config"
 	"log"
 	"net/http"
-	"strings"
 )
 
 func main() {
@@ -20,10 +19,16 @@ func main() {
 	log.Printf("Server started")
 
 	// 读取配置文件
-	config.ConfigGet()
+	config.InitConfig()
 
+	// 自定义错误码
+	config.InitErrors()
+
+	// 创建路由
 	router := sw.NewRouter()
 
-	port := strings.Join([]string{":"}, config.SysConfig.Server.Port)
-	log.Fatal(http.ListenAndServe(port, router))
+	err := http.ListenAndServe(config.System.ServerPort, router)
+	if err != nil {
+		log.Fatal("ListenAndServe: ", err)
+	}
 }

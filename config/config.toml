@@ -3,27 +3,26 @@
 
 title = "LCollector Config TOML"
 
-[server]
-port = "8080"
+[app]
+name      = "综合数据管理系统"
+logo      = ""
+version   = "1.0.0"
+copyright = "北京绿舟远智科技有限公司"
+qq        = "3158506191"
+wechat    = "BJ-LZYZ"
+website   = "http://www.wisdboat.com"
 
-[mysql]
-host = "106.14.2.153"
-port = "27017"
-name = "Collector"
-username = ""
-password = ""
-connection_max = 5000
+[system]
+server_port = ":8080"  #服务器端口
+valid_times = 7200    #设置Token有效期默认为2小时
 
-[mongodb]
-host = "106.14.2.153"
-port = "27017"
-name = "Collector"
+[mongo]
+host     = "106.14.2.153:27017"
+database = "Collector"
 username = ""
 password = ""
 
 [logger]
-enable_operate_log = true  #操作日志开关
-enable_message_log = true  #消息日志开关
-
-[token]
-valid_secs = 7200  #设置Token有效期默认为2小时
+enable_operate_log = true               #操作日志开关
+enable_message_log = true               #消息日志开关
+log_path           = "/user/local/log"  #log日志保存的绝对路径

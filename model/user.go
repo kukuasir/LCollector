@@ -19,6 +19,12 @@ type User struct {
 	UpdateTime    int64         `json:"update_time"`     // 最后更新时间
 }
 
+type UserToken struct {
+	UserId string `json:"user_id"`
+	Token  string `json:"token"`  // token
+	Expire int64  `json:"expire"` // 失效时间
+}
+
 type UserReq struct {
 	OperatorId bson.ObjectId `json:"operator_id"` // 操作人员的ID
 	UserId     bson.ObjectId `json:"user_id"`     // 目标用户ID

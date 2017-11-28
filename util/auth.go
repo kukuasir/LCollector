@@ -1,7 +1,16 @@
 package util
 
+const NAME_LENGTH_MIN int = 6
+const NAME_LENGTH_MAX int = 12
+
 func Auth(uname string, pwd string) bool {
-	if len(uname) == 0 || len(pwd) == 0 {
+
+	nameLength := len(uname)
+	pwdLength := len(pwd)
+
+	if nameLength == 0 || pwdLength == 0 {
+		return false
+	} else if nameLength < NAME_LENGTH_MIN || nameLength > NAME_LENGTH_MAX {
 		return false
 	}
 	return true
