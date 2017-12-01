@@ -11,9 +11,16 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"os/user"
 )
 
 func Login(w http.ResponseWriter, r *http.Request) {
+
+	if strings.Compare(r.Method, "POST") != 0 &&
+		strings.Compare(r.Method, "OPTION") != 0 {
+		WriteData(w, config.NewError(config.UnsupportedRequestMethod))
+		return
+	}
 
 	body, _ := ioutil.ReadAll(r.Body)
 	var loginReq model.LoginReq
@@ -29,30 +36,31 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 根据输入的用户名查询相应的用户信息
-	var user model.User
-	err := queryUserByUserName(username, &user)
+	user, err := queryUserByUname(username)
 	if err != nil {
 		panic(err)
 	}
 	if user.Status != config.USER_STATUS_NORMAL {
 		WriteData(w, config.NewError(config.AccountHadBeenLocked))
+		return
 	}
 	if strings.Compare(password, user.Password) != 0 {
 		WriteData(w, config.NewError(config.InvalidAccountOrPassword))
+		return
 	}
 
 	// 修改用户表中最后一次登录信息
-	err = updateLastLoginInfo(user.UserId, r.RemoteAddr)
+	updateLastLoginInfo(user.UserId, r.RemoteAddr)
 
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
-		info := "用户登录[" + user.UserId.String() + "]"
-		InsertOperateLog(user.UserId.String(), user.AgencyId, info, r.RemoteAddr)
+		content := "用户登录[" + user.UserId.Hex() + "]"
+		InsertOperateLog(user.UserId.Hex(), user.AgencyId, content, r.RemoteAddr)
 	}
 
 	// 查询用户权限数据
 	var paths []model.Path
-	err = queryUserResourcesByRole(user.Role, paths)
+	paths, err = queryUserResourcesByRole(user.Role)
 	if err != nil {
 		paths = defaultPaths()
 	}
@@ -61,34 +69,41 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	WriteData(w, loginret)
 }
 
-func queryUserByUserName(uname string, user *model.User) error {
+
+////=========== Private Methods ===========
+
+func queryUserByUname(uname string) (model.User, error) {
+	var user model.User
 	query := func(c *mgo.Collection) error {
 		selector := bson.M{"user_name": uname}
 		return c.Find(selector).One(&user)
 	}
-	return SharedQuery(T_USER, query)
+	err := SharedQuery(T_USER, query)
+	return user, err
 }
 
 func updateLastLoginInfo(uid bson.ObjectId, ipAddr string) error {
 	query := func(c *mgo.Collection) error {
-		selector := bson.M{"user_id": uid}
-		update := bson.M{"last_login_time": time.Now().Unix(), "last_login_ip": ipAddr}
-		return c.Update(selector, update)
+		update := bson.M{"$set": bson.M{"last_login_time": time.Now().Unix(), "last_login_ip": ipAddr}}
+		return c.UpdateId(uid, update)
 	}
 	return SharedQuery(T_USER, query)
 }
 
-func queryUserResourcesByRole(role string, paths []model.Path) error {
+func queryUserResourcesByRole(role string) ([]model.Path, error) {
+	var paths []model.Path
 	query := func(c *mgo.Collection) error {
 		selector := bson.M{"role": role}
 		return c.Find(selector).All(&paths)
 	}
-	return SharedQuery(T_ROLE_PATH, query)
+	err := SharedQuery(T_ROLE_PATH, query)
+	return paths, err
 }
 
 func defaultPaths() []model.Path {
 	var paths []model.Path
-	str := `[{"parent": "device", "children": ["/ownerDevice"]}, {"parent": "system", "children": ["/operateLog"]}]`
+	str := `[{"parent": "device", "children": ["name": "设备列表", "resource": "/deviceList"]},
+			 {"parent": "system", "children": ["name": "操作日志", "resource": "/operateLog"]}]`
 	json.Unmarshal([]byte(str), &paths)
 	return paths
 }
@@ -96,7 +111,7 @@ func defaultPaths() []model.Path {
 func newLoginRet(user model.User, paths []model.Path) model.LoginRet {
 	var ret model.LoginRet
 	ret.ResultInfo.Status = config.Success
-	ret.ResultInfo.Message = "登录成功"
+	ret.ResultInfo.Message = config.TIPS_LOGIN_SUCCEED
 	ret.ResultInfo.Token = generateToken(user.UserId.String())
 	ret.RBACData.UserName = user.UserName
 	ret.RBACData.Role = user.Role

@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-var TOKEN_PREFIX string = "BTK"
+var TOKEN_PREFIX = "BTK"
 
 func GenerateToken(uid string) string {
 	str := TOKEN_PREFIX + "_" + uid
@@ -32,8 +32,8 @@ func SaveToken(uid string, token string) bool {
 	/** 传入的token跟数据库中查询的结果一致的处理 */
 	if len(userToken.Token) > 0 && strings.Compare(token, userToken.Token) == 0 {
 		timestamp := time.Now().Unix()
-		if (userToken.Expire + config.System.ValidTimes) < timestamp {
-			updateTokenValid(uid, timestamp+config.System.ValidTimes)
+		if (userToken.Expire + config.System.ValidSecs) < timestamp {
+			updateTokenValid(uid, timestamp+config.System.ValidSecs)
 		}
 	} else { /** 传入的token跟数据库中查询的结果不一致的处理 */
 		insertToken(uid, token)
@@ -55,7 +55,7 @@ func queryTokenByUserID(uid string, ut *model.UserToken) error {
 func updateTokenValid(uid string, timestamp int64) error {
 	query := func(c *mgo.Collection) error {
 		selector := bson.M{"user_id": uid}
-		update := bson.M{"expire": timestamp + config.System.ValidTimes}
+		update := bson.M{"expire": timestamp + config.System.ValidSecs}
 		return c.Update(selector, update)
 	}
 	return SharedQuery(T_USER_TOKEN, query)

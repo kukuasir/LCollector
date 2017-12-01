@@ -9,14 +9,12 @@ import (
 
 /** 自定义错误码 */
 const (
-	UnkownStateError         = -100 // 未知错误
-	UnsupportedRequestMethod = -101 // 不支持的方法
+	UnsupportedRequestMethod = -100 // 不支持的方法
 
 	AuthenticateFailure      = -1001 // 鉴权失败
 	InvalidParameterValue    = -1002 // 数据格式有误
-	DatabaseAccessFailure    = -1003 // 数据库访问失败
-	AccountHadBeenLocked     = -1004 // 用户被锁定
-	InvalidAccountOrPassword = -1005 // 无效的账号或密码
+	AccountHadBeenLocked     = -1003 // 用户被锁定
+	InvalidAccountOrPassword = -1004 // 无效的账号或密码
 
 	DeviceHasAlreadyExists = -1010 // 设备已存在
 	DeviceHasNotExists     = -1011 // 不存在的设备
@@ -39,6 +37,13 @@ const (
 	Success = 0
 )
 
+/** 自定义成功提示 */
+const (
+	TIPS_LOGIN_SUCCEED = "登录成功"
+	TIPS_QUERY_SUCCEED = "查询成功"
+	TIPS_OPERA_SUCCEED = "操作成功"
+)
+
 type NSError struct {
 	Code    int64
 	Name    string
@@ -53,14 +58,12 @@ func InitErrors() {
 
 	data, err := ioutil.ReadFile("config/error.json")
 	if err != nil {
-		fmt.Println("Read json file error: " + err.Error())
-		return
+		panic(err)
 	}
 
 	err = json.Unmarshal(data, &errors)
 	if err != nil {
-		fmt.Println("Unmarshal json error: " + err.Error())
-		return
+		panic(err)
 	}
 }
 

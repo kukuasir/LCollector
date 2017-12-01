@@ -29,7 +29,7 @@ type appConfig struct {
 
 type systemConfig struct {
 	ServerPort string `toml:"server_port"`
-	ValidTimes int64  `toml:"valid_times"`
+	ValidSecs  int64  `toml:"valid_times"`
 }
 
 type mongoConfig struct {
@@ -49,14 +49,13 @@ func InitConfig() {
 
 	fmt.Println("Read Config...")
 
-	var config TomlConfig
-	if _, err := toml.DecodeFile("config/config.toml", &config); err != nil {
-		fmt.Println(err)
-		return
+	var tomlConfig TomlConfig
+	if _, err := toml.DecodeFile("config/config.toml", &tomlConfig); err != nil {
+		panic(err)
 	}
 
-	App = config.AppConfig
-	System = config.SystemConfig
-	Mongo = config.MongoConfig
-	Logger = config.LogConfig
+	App = tomlConfig.AppConfig
+	System = tomlConfig.SystemConfig
+	Mongo = tomlConfig.MongoConfig
+	Logger = tomlConfig.LogConfig
 }

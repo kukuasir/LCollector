@@ -8,8 +8,8 @@ import (
 	//
 	//    sw "github.com/myname/myrepo/go"
 	//
-	sw "./controller"
 	"LCollector/config"
+	sw "LCollector/controller"
 	"log"
 	"net/http"
 )
