@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"github.com/BurntSushi/toml"
 )
 
@@ -47,8 +46,6 @@ type logConfig struct {
 }
 
 func InitConfig() {
-
-	fmt.Println("Read Config...")
 
 	var tomlConfig TomlConfig
 	if _, err := toml.DecodeFile("config/config.toml", &tomlConfig); err != nil {

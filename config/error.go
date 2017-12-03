@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"strconv"
 )
@@ -53,8 +52,6 @@ type NSError struct {
 var errors []NSError
 
 func InitErrors() {
-
-	fmt.Println("Read Error...")
 
 	data, err := ioutil.ReadFile("config/error.json")
 	if err != nil {

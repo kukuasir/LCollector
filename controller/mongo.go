@@ -23,7 +23,7 @@ var session *mgo.Session
  * 公共方法，获取collection对象
  */
 func SharedQuery(table string, s func(*mgo.Collection) error) error {
-	sess := SharedSession()
+	sess := GlobalMgoSession()
 	defer sess.Close()
 	coll := sess.DB(config.Mongo.Database).C(table)
 	return s(coll)
@@ -32,7 +32,7 @@ func SharedQuery(table string, s func(*mgo.Collection) error) error {
 /**
  * 公共方法，获取session，如果存在则拷贝一份
  */
-func SharedSession() *mgo.Session {
+func GlobalMgoSession() *mgo.Session {
 	if session == nil {
 		var err error
 		session, err = mgo.Dial(config.Mongo.Host)
@@ -40,6 +40,7 @@ func SharedSession() *mgo.Session {
 			panic(err) //直接终止程序运行
 		}
 	}
+	session.SetMode(mgo.Monotonic, true)
 	//最大连接池默认为4096
 	return session.Clone()
 }

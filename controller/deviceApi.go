@@ -355,6 +355,8 @@ func fetchPagingDeviceList(operator model.User, page, size int) ([]model.Device,
 		var selector map[string]interface{}
 		if operator.Role == "root" {
 			selector = bson.M{"status": bson.M{"$gt": config.DEVICE_STATUS_INVALID}}
+		} else if operator.Role == "admin" {
+			selector = bson.M{"status": bson.M{"$gt": config.DEVICE_STATUS_INVALID}, "agency_id": operator.AgencyId}
 		} else {
 			selector = bson.M{"status": bson.M{"$gt": config.DEVICE_STATUS_INVALID}, "agency_id": operator.AgencyId}
 		}

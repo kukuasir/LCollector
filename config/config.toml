@@ -6,7 +6,7 @@ title = "LCollector Config TOML"
 [app]
 name      = "综合数据管理系统"
 logo      = ""
-summary   = ""
+summary   = "综合数据管理系统"
 version   = "1.0.0"
 copyright = "北京绿舟远智科技有限公司"
 qq        = "3158506191"

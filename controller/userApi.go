@@ -297,6 +297,10 @@ func GetUserInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 根据用户所在的机构ID查询组织机构信息
+	agency, err := queryAgencyInfoByID(user.AgencyId)
+	user.AgencyName = agency.AgencyName
+
 	// 返回查询结果
 	var userRet model.UserRet
 	userRet.ResultInfo.Status = config.Success
@@ -333,6 +337,7 @@ func addUserInfo(req model.UserReq) error {
 			"priority":   req.Priority,
 			"lasttime":   0,
 			"lastonip":   "",
+			"own_devids": req.OwnDevids,
 			"status":     config.USER_STATUS_NORMAL,
 			"createtime": time.Now().Unix(),
 			"updatetime": time.Now().Unix(),
@@ -362,6 +367,7 @@ func updateUserInfo(req model.UserReq) error {
 				"agency_id":  req.AgencyId,
 				"role":       req.Role,
 				"priority":   req.Priority,
+				"own_devids": req.OwnDevids,
 				"status":     req.Status,
 				"updatetime": time.Now().Unix(),
 			},
@@ -384,13 +390,34 @@ func updatePwd(req model.UserReq) error {
 func fetchPagingUserList(operator model.User, page, size int) ([]model.User, error) {
 	var userList []model.User
 	query := func(c *mgo.Collection) error {
-		var selector map[string]interface{}
-		if operator.Role == "root" {
-			selector = bson.M{"status": bson.M{"$gt": config.USER_STATUS_INVALID}}
-		} else {
-			selector = bson.M{"status": bson.M{"$gt": config.USER_STATUS_INVALID}, "agency_id": operator.AgencyId}
+		//var selector map[string]interface{}
+		//if operator.Role == "root" {
+		//	selector = bson.M{"status": bson.M{"$gt": config.USER_STATUS_INVALID}}
+		//} else {
+		//	selector = bson.M{"status": bson.M{"$gt": config.USER_STATUS_INVALID}, "agency_id": operator.AgencyId}
+		//}
+		pipeline := []bson.M{
+			bson.M{"$match": bson.M{"agency_id": operator.AgencyId}},
+			bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "_id", "foreignField": "agency_id", "as": "agency"}},
+			bson.M{"$project": bson.M{
+				"user_name": 1,
+				"gender": 1,
+				"birth": 1,
+				"mobile": 1,
+				"agency_id": 1,
+				"agency.agency_name": 1,
+				"role": 1,
+				"priority": 1,
+				"own_devids": 1,
+				"status": 1,
+				"last_login_time": 1,
+				"last_login_ip": 1,
+				"create_time": 1,
+				"update_time": 1,
+				}},
 		}
-		return c.Find(selector).Skip(page * size).Limit(size).All(&userList)
+		//return c.Find(selector).Skip(page * size).Limit(size).All(&userList)
+		return c.Pipe(pipeline).All(&userList)
 	}
 	err := SharedQuery(T_USER, query)
 	return userList, err
