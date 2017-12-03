@@ -6,6 +6,20 @@ import (
 	"net/http"
 )
 
+/** 定义操作类型 */
+const (
+	OPERATE_TYPE_ADD    = 1
+	OPERATE_TYPE_DELETE = 2
+	OPERATE_TYPE_UPDATE = 3
+)
+
+/** 操作对象 */
+const (
+	OPERATE_TARGET_USER   = 10
+	OPERATE_TARGET_AGENCY = 11
+	OPERATE_TARGET_DEVICE = 12
+)
+
 func WriteData(w http.ResponseWriter, res interface{}) {
 	data, err := json.Marshal(res)
 	if err != nil {

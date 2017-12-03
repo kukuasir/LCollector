@@ -3,7 +3,7 @@ package model
 import "gopkg.in/mgo.v2/bson"
 
 type Device struct {
-	DeviceId   bson.ObjectId `json:"device_id" bson:"_id,omitempty"` // 设备编号(唯一)
+	DeviceId   bson.ObjectId `json:"device_id" bson:"_id,omitempty"` // 设备ID
 	DeviceName string        `json:"device_name" bson:"device_name"` // 设备名称
 	AgencyId   string        `json:"agency_id" bson:"agency_id"`     // 所属机构ID
 	Latitude   float64       `json:"latitude"`                       // 维度
@@ -25,7 +25,7 @@ type DeviceReq struct {
 
 type DeviceRet struct {
 	ResultInfo Result `json:"result"` // 返回结果
-	DeviceInfo Device `json:"data"`   // 设备信息
+	DeviceData Device `json:"data"`   // 设备信息
 }
 
 type DeviceListRet struct {

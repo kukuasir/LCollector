@@ -25,7 +25,7 @@ type AgencyReq struct {
 
 type AgencyRet struct {
 	ResultInfo Result `json:"result"` // 返回结果
-	AgencyInfo Agency `json:"data"`   // 组织机构信息
+	AgencyData Agency `json:"data"`   // 组织机构信息
 }
 
 type AgencyListRet struct {

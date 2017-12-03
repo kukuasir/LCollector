@@ -17,7 +17,7 @@ const (
 
 /** 组织机构状态 */
 const (
-	AGENCE_STATUS_INVALID = -1 // 无效的机构状态
-	AGENCE_STATUS_NORMAL  = 0  // 正常
-	AGENCE_STATUS_LOCKED  = 1  // 锁定
+	AGENCY_STATUS_INVALID = -1 // 无效的机构状态
+	AGENCY_STATUS_NORMAL  = 0  // 正常
+	AGENCY_STATUS_LOCKED  = 1  // 锁定
 )

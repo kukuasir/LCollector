@@ -11,13 +11,11 @@ import (
 	"net/http"
 	"strings"
 	"time"
-	"os/user"
 )
 
 func Login(w http.ResponseWriter, r *http.Request) {
 
-	if strings.Compare(r.Method, "POST") != 0 &&
-		strings.Compare(r.Method, "OPTION") != 0 {
+	if strings.Compare(r.Method, "POST") != 0 && strings.Compare(r.Method, "OPTION") != 0 {
 		WriteData(w, config.NewError(config.UnsupportedRequestMethod))
 		return
 	}
@@ -52,10 +50,9 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	// 修改用户表中最后一次登录信息
 	updateLastLoginInfo(user.UserId, r.RemoteAddr)
 
-	// 记录操作日志
+	// 记录到登录日志
 	if config.Logger.EnableOperateLog {
-		content := "用户登录[" + user.UserId.Hex() + "]"
-		InsertOperateLog(user.UserId.Hex(), user.AgencyId, content, r.RemoteAddr)
+		InsertLoginLog(user, r.RemoteAddr)
 	}
 
 	// 查询用户权限数据
@@ -68,7 +65,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	loginret := newLoginRet(user, paths)
 	WriteData(w, loginret)
 }
-
 
 ////=========== Private Methods ===========
 

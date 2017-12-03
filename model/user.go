@@ -40,11 +40,11 @@ type UserReq struct {
 }
 
 type UserRet struct {
-	ResultData Result `json:"result"` // 返回结果
+	ResultInfo Result `json:"result"` // 返回结果
 	UserData   User   `json:"data"`   // 用户信息
 }
 
 type UserListRet struct {
-	ResultData Result `json:"result"` // 返回结果
+	ResultInfo Result `json:"result"` // 返回结果
 	UserList   []User `json:"datas"`  // 用户列表信息
 }

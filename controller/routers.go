@@ -94,6 +94,13 @@ var routes = Routes{
 	},
 
 	Route{
+		"RegisterDevice",
+		"POST",
+		"/device/register",
+		RegisterDevice,
+	},
+
+	Route{
 		"DeleteDevice",
 		"GET",
 		"/device/delete",
@@ -133,6 +140,13 @@ var routes = Routes{
 		"GET",
 		"/log/operate",
 		FetchOperateLogList,
+	},
+
+	Route{
+		"FetchLoginLogList",
+		"GET",
+		"/log/login",
+		FetchLoginLogList,
 	},
 
 	Route{

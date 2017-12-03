@@ -11,25 +11,26 @@ var Mongo mongoConfig
 var Logger logConfig
 
 type TomlConfig struct {
-	AppConfig    appConfig    `toml:"app"`
-	SystemConfig systemConfig `toml:"system"`
-	MongoConfig  mongoConfig  `toml:"mongo"`
-	LogConfig    logConfig    `toml:"logger"`
+	AppConfig    appConfig    `toml:"app"`    // App信息配置
+	SystemConfig systemConfig `toml:"system"` // 系统设置信息
+	MongoConfig  mongoConfig  `toml:"mongo"`  // mongo配置信息
+	LogConfig    logConfig    `toml:"logger"` // 日志设置信息
 }
 
 type appConfig struct {
-	Name      string `toml:"name"`
-	Logo      string `toml:"logo"`
-	Version   string `toml:"version"`
-	Copyright string `toml:"copyright"`
-	QQ        string `toml:"qq"`
-	Wechat    string `toml:"wechat"`
-	Website   string `toml:"website"`
+	Name      string `toml:"name"`      // App名字
+	Logo      string `toml:"logo"`      // 系统Logo
+	Summary   string `toml:"summary"`   // 系统描述
+	Version   string `toml:"version"`   // 系统版本
+	Copyright string `toml:"copyright"` // 版权
+	QQ        string `toml:"qq"`        // QQ
+	Wechat    string `toml:"wechat"`    // 微信公众号
+	Website   string `toml:"website"`   // 网站
 }
 
 type systemConfig struct {
-	ServerPort string `toml:"server_port"`
-	ValidSecs  int64  `toml:"valid_times"`
+	ServerPort string `toml:"server_port"` // API服务端口
+	ValidSecs  int64  `toml:"valid_times"` // Token有效时长
 }
 
 type mongoConfig struct {
@@ -40,9 +41,9 @@ type mongoConfig struct {
 }
 
 type logConfig struct {
-	EnableOperateLog bool   `toml:"enable_operate_log"`
-	EnableMessageLog bool   `toml:"enable_message_log"`
-	LogPath          string `toml:"log_path"`
+	EnableOperateLog bool   `toml:"enable_operate_log"` // 是否打开操作日志
+	EnableMessageLog bool   `toml:"enable_message_log"` // 是否打开消息日志
+	LogPath          string `toml:"log_path"`           // 本地日志文件存储路径
 }
 
 func InitConfig() {
