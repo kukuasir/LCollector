@@ -59,7 +59,7 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
 		target := "用户[" + req.UserName + "]"
-		InsertOperateLog(OPERATE_TYPE_ADD, operator.UserId.Hex(), operator.AgencyId, target, r.RemoteAddr)
+		InsertOperateLog(OPERATE_TYPE_ADD, operator, target, r.RemoteAddr)
 	}
 
 	// 返回成功消息
@@ -98,7 +98,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证操作人是否有权限删除对象
-	status := verifyOperatorPermission(operator, user.AgencyId, OPERATE_TARGET_USER)
+	status := verifyOperatorPermission(operator, user.Agency.AgencyId.Hex(), OPERATE_TARGET_USER)
 	if status != config.Success {
 		WriteData(w, config.NewError(status))
 		return
@@ -112,7 +112,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
 		target := "用户[" + user.UserId.Hex() + "]"
-		InsertOperateLog(OPERATE_TYPE_DELETE, operator.UserId.Hex(), operator.AgencyId, target, r.RemoteAddr)
+		InsertOperateLog(OPERATE_TYPE_DELETE, operator, target, r.RemoteAddr)
 	}
 
 	// 返回成功消息
@@ -158,7 +158,7 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证操作人是否有权限修改对象
-	status := verifyOperatorPermission(operator, user.AgencyId, OPERATE_TARGET_USER)
+	status := verifyOperatorPermission(operator, user.Agency.AgencyId.Hex(), OPERATE_TARGET_USER)
 	if status != config.Success {
 		WriteData(w, config.NewError(status))
 		return
@@ -172,7 +172,7 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
 		target := "用户[" + user.UserId.Hex() + "]"
-		InsertOperateLog(OPERATE_TYPE_UPDATE, operator.UserId.Hex(), operator.AgencyId, target, r.RemoteAddr)
+		InsertOperateLog(OPERATE_TYPE_UPDATE, operator, target, r.RemoteAddr)
 	}
 
 	// 返回成功消息
@@ -225,7 +225,7 @@ func UpdatePwd(w http.ResponseWriter, r *http.Request) {
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
 		target := "密码[" + user.UserId.Hex() + "]"
-		InsertOperateLog(OPERATE_TYPE_UPDATE, operator.UserId.Hex(), operator.AgencyId, target, r.RemoteAddr)
+		InsertOperateLog(OPERATE_TYPE_UPDATE, operator, target, r.RemoteAddr)
 	}
 
 	// 返回成功消息
@@ -243,6 +243,10 @@ func FetchUserList(w http.ResponseWriter, r *http.Request) {
 	operatorId := r.URL.Query().Get("operator_id")
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
+
+	if size == 0 {
+		size = 20
+	}
 
 	// 验证操作人是否存在
 	operator, err := queryUserByID(operatorId)
@@ -297,10 +301,6 @@ func GetUserInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 根据用户所在的机构ID查询组织机构信息
-	agency, err := queryAgencyInfoByID(user.AgencyId)
-	user.AgencyName = agency.AgencyName
-
 	// 返回查询结果
 	var userRet model.UserRet
 	userRet.ResultInfo.Status = config.Success
@@ -309,7 +309,6 @@ func GetUserInfo(w http.ResponseWriter, r *http.Request) {
 	WriteData(w, userRet)
 }
 
-
 ////=========== Private Methods ===========
 
 // 根据用户ID获取用户信息
@@ -317,7 +316,11 @@ func queryUserByID(userId string) (model.User, error) {
 	var user model.User
 	objId := bson.ObjectIdHex(userId)
 	query := func(c *mgo.Collection) error {
-		return c.FindId(objId).One(&user)
+		pipeline := []bson.M{
+			bson.M{"$match": bson.M{"_id": objId}},
+			bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency"}},
+		}
+		return c.Pipe(pipeline).One(&user)
 	}
 	err := SharedQuery(T_USER, query)
 	return user, err
@@ -332,7 +335,7 @@ func addUserInfo(req model.UserReq) error {
 			"gender":     req.Gender,
 			"birth":      req.Birth,
 			"mobile":     req.Mobile,
-			"agentid":    req.AgencyId,
+			"agency_id":  bson.ObjectIdHex(req.AgencyId),
 			"role":       req.Role,
 			"priority":   req.Priority,
 			"lasttime":   0,
@@ -390,33 +393,21 @@ func updatePwd(req model.UserReq) error {
 func fetchPagingUserList(operator model.User, page, size int) ([]model.User, error) {
 	var userList []model.User
 	query := func(c *mgo.Collection) error {
-		//var selector map[string]interface{}
-		//if operator.Role == "root" {
-		//	selector = bson.M{"status": bson.M{"$gt": config.USER_STATUS_INVALID}}
-		//} else {
-		//	selector = bson.M{"status": bson.M{"$gt": config.USER_STATUS_INVALID}, "agency_id": operator.AgencyId}
-		//}
-		pipeline := []bson.M{
-			bson.M{"$match": bson.M{"agency_id": operator.AgencyId}},
-			bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "_id", "foreignField": "agency_id", "as": "agency"}},
-			bson.M{"$project": bson.M{
-				"user_name": 1,
-				"gender": 1,
-				"birth": 1,
-				"mobile": 1,
-				"agency_id": 1,
-				"agency.agency_name": 1,
-				"role": 1,
-				"priority": 1,
-				"own_devids": 1,
-				"status": 1,
-				"last_login_time": 1,
-				"last_login_ip": 1,
-				"create_time": 1,
-				"update_time": 1,
-				}},
+		var pipeline []bson.M
+		if operator.Role == "root" {
+			pipeline = []bson.M{
+				bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency"}},
+				bson.M{"$skip": page * size},
+				bson.M{"$limit": size},
+			}
+		} else {
+			pipeline = []bson.M{
+				bson.M{"$match": bson.M{"agency_id": operator.Agency.AgencyId}},
+				bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency"}},
+				bson.M{"$skip": page * size},
+				bson.M{"$limit": size},
+			}
 		}
-		//return c.Find(selector).Skip(page * size).Limit(size).All(&userList)
 		return c.Pipe(pipeline).All(&userList)
 	}
 	err := SharedQuery(T_USER, query)
@@ -428,7 +419,7 @@ func verifyOperatorPermission(operator model.User, agencyId string, target int64
 	if operator.Role == "customer" {
 		return errorWithTarget(target)
 	} else if operator.Role == "admin" {
-		if len(agencyId) > 0 && agencyId == operator.AgencyId {
+		if len(agencyId) > 0 && agencyId == operator.Agency.AgencyId.Hex() {
 			return config.Success
 		} else {
 			return errorWithTarget(target)

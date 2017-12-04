@@ -66,6 +66,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	WriteData(w, loginret)
 }
 
+
 ////=========== Private Methods ===========
 
 func queryUserByUname(uname string) (model.User, error) {

@@ -58,7 +58,7 @@ func AddDevice(w http.ResponseWriter, r *http.Request) {
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
 		target := "设备[" + req.DeviceId + "]"
-		InsertOperateLog(OPERATE_TYPE_ADD, operator.UserId.Hex(), operator.AgencyId, target, r.RemoteAddr)
+		InsertOperateLog(OPERATE_TYPE_ADD, operator, target, r.RemoteAddr)
 	}
 
 	// 返回成功消息
@@ -141,7 +141,7 @@ func DeleteDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证操作人是否有权限删除对象
-	status := verifyOperatorPermission(operator, device.AgencyId, OPERATE_TARGET_DEVICE)
+	status := verifyOperatorPermission(operator, device.Agency.AgencyId.Hex(), OPERATE_TARGET_DEVICE)
 	if status != config.Success {
 		WriteData(w, config.NewError(status))
 		return
@@ -155,7 +155,7 @@ func DeleteDevice(w http.ResponseWriter, r *http.Request) {
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
 		target := "设备[" + deviceId + "]"
-		InsertOperateLog(OPERATE_TYPE_DELETE, operator.UserId.Hex(), operator.AgencyId, target, r.RemoteAddr)
+		InsertOperateLog(OPERATE_TYPE_DELETE, operator, target, r.RemoteAddr)
 	}
 
 	// 返回成功消息
@@ -201,7 +201,7 @@ func EditDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证操作人是否有权限修改对象
-	status := verifyOperatorPermission(operator, device.AgencyId, OPERATE_TARGET_DEVICE)
+	status := verifyOperatorPermission(operator, device.Agency.AgencyId.Hex(), OPERATE_TARGET_DEVICE)
 	if status != config.Success {
 		WriteData(w, config.NewError(status))
 		return
@@ -215,7 +215,7 @@ func EditDevice(w http.ResponseWriter, r *http.Request) {
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
 		target := "设备[" + req.DeviceId + "]"
-		InsertOperateLog(OPERATE_TYPE_UPDATE, operator.UserId.Hex(), operator.AgencyId, target, r.RemoteAddr)
+		InsertOperateLog(OPERATE_TYPE_UPDATE, operator, target, r.RemoteAddr)
 	}
 
 	// 返回成功消息
@@ -350,17 +350,49 @@ func updateDeviceInfo(req model.DeviceReq) error {
 }
 
 func fetchPagingDeviceList(operator model.User, page, size int) ([]model.Device, error) {
+	//var deviceList []model.Device
+	//query := func(c *mgo.Collection) error {
+	//	var selector map[string]interface{}
+	//	if operator.Role == "root" {
+	//		selector = bson.M{"status": bson.M{"$gt": config.DEVICE_STATUS_INVALID}}
+	//	} else if operator.Role == "admin" {
+	//		selector = bson.M{"status": bson.M{"$gt": config.DEVICE_STATUS_INVALID}, "agency_id": operator.Agency.AgencyId}
+	//	} else {
+	//		selector = bson.M{"status": bson.M{"$gt": config.DEVICE_STATUS_INVALID}, "agency_id": operator.Agency.AgencyId}
+	//	}
+	//	return c.Find(selector).Skip(page * size).Limit(size).All(&deviceList)
+	//}
+	//err := SharedQuery(T_DEVICE, query)
+	//return deviceList, err
+
 	var deviceList []model.Device
 	query := func(c *mgo.Collection) error {
-		var selector map[string]interface{}
+		var pipeline []bson.M
 		if operator.Role == "root" {
-			selector = bson.M{"status": bson.M{"$gt": config.DEVICE_STATUS_INVALID}}
+			pipeline = []bson.M{
+				bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency"}},
+				bson.M{"$unwind": "$agency"},
+				bson.M{"$skip": page * size},
+				bson.M{"$limit": size},
+			}
 		} else if operator.Role == "admin" {
-			selector = bson.M{"status": bson.M{"$gt": config.DEVICE_STATUS_INVALID}, "agency_id": operator.AgencyId}
+			pipeline = []bson.M{
+				bson.M{"$match": bson.M{"agency_id": operator.Agency.AgencyId}},
+				bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency"}},
+				bson.M{"$unwind": "$agency"},
+				bson.M{"$skip": page * size},
+				bson.M{"$limit": size},
+			}
 		} else {
-			selector = bson.M{"status": bson.M{"$gt": config.DEVICE_STATUS_INVALID}, "agency_id": operator.AgencyId}
+			pipeline = []bson.M{
+				bson.M{"$match": bson.M{"agency_id": operator.Agency.AgencyId}},
+				bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency"}},
+				bson.M{"$unwind": "$agency"},
+				bson.M{"$skip": page * size},
+				bson.M{"$limit": size},
+			}
 		}
-		return c.Find(selector).Skip(page * size).Limit(size).All(&deviceList)
+		return c.Pipe(pipeline).All(&deviceList)
 	}
 	err := SharedQuery(T_DEVICE, query)
 	return deviceList, err

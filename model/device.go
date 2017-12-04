@@ -5,7 +5,7 @@ import "gopkg.in/mgo.v2/bson"
 type Device struct {
 	DeviceId   bson.ObjectId `json:"device_id" bson:"_id,omitempty"` // 设备ID
 	DeviceName string        `json:"device_name" bson:"device_name"` // 设备名称
-	AgencyId   string        `json:"agency_id" bson:"agency_id"`     // 所属机构ID
+	Agency     Agency        `json:"agency" bson:"agency"`           // 所属机构ID
 	Latitude   float64       `json:"latitude"`                       // 维度
 	Longitude  float64       `json:"longitude"`                      // 经度
 	Status     int64         `json:"status"`                         // 状态(-1:未分配  0:正常  1:报废)
