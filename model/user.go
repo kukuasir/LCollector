@@ -15,7 +15,7 @@ type User struct {
 	Role          string        `json:"role"`                                   // 角色
 	Priority      string        `json:"priority"`                               // 设备查看方式的优先级
 	Status        int64         `json:"status"`                                 // 状态
-	Devices       []Device      `json:"devices"`                                // 可以查看或操作的设备列表
+	Devices       []DeviceCheck `json:"devices"`                                // 可以查看或操作的设备列表
 	LastLoginTime int64         `json:"last_login_time" bson:"last_login_time"` // 最后一次登录时间
 	LastLoginIP   string        `json:"last_login_ip" bson:"last_login_ip"`     // 最后一次登录的IP
 	CreateTime    int64         `json:"create_time" bson:"create_time"`         // 创建时间
@@ -23,15 +23,23 @@ type User struct {
 }
 
 /** 临时-用户与组织机构关联信息 */
-type TempUserAgency struct {
-	UserId        bson.ObjectId `json:"user_id"` // 用户唯一ID
-	Agencys       []Agency      `json:"agency"`  // 组织机构列表
+type TempUser struct {
+	UserId        bson.ObjectId `json:"user_id" bson:"_id,omitempty"`           // 用户唯一ID
+	UserName      string        `json:"user_name" bson:"user_name"`             // 用户名(不可重复)
+	AgencyId      bson.ObjectId `json:"agency_id" bson:"agency_id"`             // 所属组织机构ID
+	Role          string        `json:"role"`                                   // 角色
+	Status        int64         `json:"status"`                                 // 状态
+	LastLoginTime int64         `json:"last_login_time" bson:"last_login_time"` // 最后一次登录时间
+	LastLoginIP   string        `json:"last_login_ip" bson:"last_login_ip"`     // 最后一次登录的IP
+	CreateTime    int64         `json:"create_time" bson:"create_time"`         // 创建时间
+	UpdateTime    int64         `json:"update_time" bson:"update_time"`         // 最后更新时间
+	AgencyDocs    []Agency      `json:"agency_docs"`                            // 组织机构列表
 }
 
 /** 临时-用户与设备关联信息 */
 type TempUserDevice struct {
-	UserId        bson.ObjectId `json:"user_id"` // 用户唯一ID
-	Devices       []Device      `json:"device"`  // 设备列表
+	UserId     bson.ObjectId `json:"user_id"`     // 用户唯一ID
+	DeviceDocs []Device      `json:"device_docs"` // 设备列表
 }
 
 /** 用于添加或修改用户信息请求的结构体 */

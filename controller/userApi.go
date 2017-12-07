@@ -268,9 +268,29 @@ func FetchUserList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userList, err := fetchPagingUserList(operator, page, size)
+	tempUsers, err := fetchPagingUserList(operator, page, size)
 	if err != nil {
 		panic(err)
+	}
+
+	// 转换到User表中
+	var userList []model.User
+	for i := 0; i < len(tempUsers); i++ {
+		temp := tempUsers[i]
+		var user model.User
+		user.UserId = temp.UserId
+		user.UserName = temp.UserName
+		user.AgencyId = temp.AgencyId
+		user.Role = temp.Role
+		user.Status = temp.Status
+		user.LastLoginTime = temp.LastLoginTime
+		user.LastLoginIP = temp.LastLoginIP
+		user.CreateTime = temp.CreateTime
+		user.UpdateTime = temp.UpdateTime
+		if len(temp.AgencyDocs) > 0 {
+			user.AgencyName = temp.AgencyDocs[0].AgencyName
+		}
+		userList[i] = user
 	}
 
 	// 返回查询结果
@@ -310,6 +330,11 @@ func GetUserInfo(w http.ResponseWriter, r *http.Request) {
 		WriteData(w, config.UserHasNotExists)
 		return
 	}
+
+	// 获取用户可操作的设备信息
+	var deviceCheckList []model.DeviceCheck
+	deviceCheckList, err = fetchDeviceCheckListBy(user)
+	user.Devices = deviceCheckList
 
 	// 返回查询结果
 	var userRet model.UserRet
@@ -409,20 +434,20 @@ func UpsertDeviceIsBy(userId string, deviceIds []string) error {
 }
 
 // 分页查询用户列表
-func fetchPagingUserList(operator model.User, page, size int) ([]model.User, error) {
+func fetchPagingUserList(operator model.User, page, size int) ([]model.TempUser, error) {
 
 	if operator.Role == "customer" {
 		return nil, nil
 	}
 
-	var userList []model.User
+	var tempUsers []model.TempUser
 	query := func(c *mgo.Collection) error {
 		pipeline := []bson.M{
 			bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency"}},
 			bson.M{"$skip": page * size},
 			bson.M{"$limit": size},
 			bson.M{"$project": bson.M{
-				"user_id":            1,
+				"_id":            1,
 				"user_name":          1,
 				"gender":             1,
 				"birth":              1,
@@ -440,10 +465,10 @@ func fetchPagingUserList(operator model.User, page, size int) ([]model.User, err
 		if operator.Role == "customer" {
 			pipeline = append(pipeline, bson.M{"$match": bson.M{"agency_id": operator.AgencyId}})
 		}
-		return c.Pipe(pipeline).All(&userList)
+		return c.Pipe(pipeline).All(&tempUsers)
 	}
 	err := SharedQuery(T_USER, query)
-	return userList, err
+	return tempUsers, err
 }
 
 // 根据用户ID查询可操作的设备列表
@@ -456,20 +481,21 @@ func fetchDeviceCheckListBy(user model.User) ([]model.DeviceCheck, error) {
 	usedDevices, err := fetchDeviceListInUsed(user.UserId)
 
 	var deviceCheckList []model.DeviceCheck
-	for i := 0; i < len(totalDevices); i++ {
-		device := totalDevices[i]
-		var deviceCheck model.DeviceCheck
-		deviceCheck.DeviceId = device.DeviceId
-		deviceCheck.DeviceName = device.DeviceName
-		for j := 0; j < len(usedDevices); j++ {
-			temp := usedDevices[i]
-			if device.DeviceId == temp.Devices[0].DeviceId {
+	var temp model.TempUserDevice
+	var device model.Device
+	for i := 0; i < len(usedDevices); i++ {
+		temp = usedDevices[i]
+		for j := 0; j < len(totalDevices); j++ {
+			device = totalDevices[i]
+			if device.DeviceId == temp.DeviceDocs[0].DeviceId {
+				var deviceCheck model.DeviceCheck
+				deviceCheck.DeviceId = device.DeviceId
+				deviceCheck.DeviceName = device.DeviceName
 				deviceCheck.Check = true
-			} else {
-				deviceCheck.Check = false
+				deviceCheckList[i] = deviceCheck
+				break
 			}
 		}
-		deviceCheckList[i] = deviceCheck
 	}
 
 	return deviceCheckList, err

@@ -359,7 +359,7 @@ func fetchPagingDeviceList(operator model.User, page, size int) ([]model.Device,
 			}
 		} else if operator.Role == "admin" {
 			pipeline = []bson.M{
-				bson.M{"$match": bson.M{"agency_id": operator.Agency.AgencyId}},
+				bson.M{"$match": bson.M{"agency_id": operator.AgencyId}},
 				bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency"}},
 				bson.M{"$unwind": "$agency"},
 				bson.M{"$skip": page * size},
@@ -367,7 +367,7 @@ func fetchPagingDeviceList(operator model.User, page, size int) ([]model.Device,
 			}
 		} else {
 			pipeline = []bson.M{
-				bson.M{"$match": bson.M{"agency_id": operator.Agency.AgencyId}},
+				bson.M{"$match": bson.M{"agency_id": operator.AgencyId}},
 				bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency"}},
 				bson.M{"$unwind": "$agency"},
 				bson.M{"$skip": page * size},

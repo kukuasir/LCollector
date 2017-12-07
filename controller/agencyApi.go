@@ -58,8 +58,7 @@ func AddAgency(w http.ResponseWriter, r *http.Request) {
 
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
-		target := "组织机构[" + req.AgencyName + "]"
-		InsertOperateLog(OPERATE_TYPE_ADD, operator, target, r.RemoteAddr)
+		InsertOperateLog(OPERATE_TYPE_ADD, OPERATE_TARGET_AGENCY, operator, req.AgencyName, r.RemoteAddr)
 	}
 
 	// 返回成功消息
@@ -111,8 +110,7 @@ func DeleteAgency(w http.ResponseWriter, r *http.Request) {
 
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
-		target := "组织机构[" + agencyId + "]"
-		InsertOperateLog(OPERATE_TYPE_DELETE, operator, target, r.RemoteAddr)
+		InsertOperateLog(OPERATE_TYPE_DELETE, OPERATE_TARGET_DEVICE, operator, agencyId, r.RemoteAddr)
 	}
 
 	// 返回成功消息
@@ -171,8 +169,7 @@ func EditAgency(w http.ResponseWriter, r *http.Request) {
 
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
-		target := "组织机构[" + req.AgencyId + "]"
-		InsertOperateLog(OPERATE_TYPE_UPDATE, operator, target, r.RemoteAddr)
+		InsertOperateLog(OPERATE_TYPE_UPDATE, OPERATE_TARGET_AGENCY, operator, req.AgencyId, r.RemoteAddr)
 	}
 
 	// 返回成功消息
