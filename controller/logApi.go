@@ -6,9 +6,9 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"net/http"
-	"time"
-	"strings"
 	"strconv"
+	"strings"
+	"time"
 )
 
 func FetchMessageLogList(w http.ResponseWriter, r *http.Request) {
@@ -119,7 +119,7 @@ func InsertLoginLog(user model.User, ipaddr string) bool {
 		selector := bson.M{
 			"user_id":     user.UserId,
 			"status":      user.Status,
-			"agency_id":   user.Agency.AgencyId,
+			"agency_id":   user.AgencyId,
 			"create_time": time.Now().Unix(),
 			"source_ip":   ipaddr,
 		}
@@ -133,15 +133,16 @@ func InsertLoginLog(user model.User, ipaddr string) bool {
 }
 
 // 插入操作日志
-func InsertOperateLog(operateType int64, operator model.User, target string, ipaddr string) bool {
+func InsertOperateLog(mode int64, target int64, operator model.User, object string, ipaddr string) bool {
 	query := func(c *mgo.Collection) error {
 		selector := bson.M{
-			"operator_type": operateType,
-			"operator_id":   operator.UserId,
-			"agency_id":     operator.Agency.AgencyId,
-			"target":        target,
-			"create_time":   time.Now().Unix(),
-			"source_ip":     ipaddr,
+			"type":        mode,
+			"target":      target,
+			"operator_id": operator.UserId,
+			"agency_id":   operator.AgencyId,
+			"object":      object,
+			"create_time": time.Now().Unix(),
+			"source_ip":   ipaddr,
 		}
 		return c.Insert(selector)
 	}
@@ -194,7 +195,7 @@ func fetchPagingLoginLogs(operator model.User, page, size int) ([]model.LoginLog
 			}
 		} else if operator.Role == "admin" {
 			pipeline = []bson.M{
-				bson.M{"agency_id": operator.Agency.AgencyId},
+				bson.M{"agency_id": operator.AgencyId},
 				bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency"}},
 				bson.M{"$unwind": "$agency"},
 				bson.M{"$sort": bson.M{"time": -1}},
@@ -229,7 +230,7 @@ func fetchPagingOperateLogs(operator model.User, page, size int) ([]model.Operat
 			}
 		} else if operator.Role == "admin" {
 			pipeline = []bson.M{
-				bson.M{"agency_id": operator.Agency.AgencyId},
+				bson.M{"agency_id": operator.AgencyId},
 				bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency"}},
 				bson.M{"unwind": "$agency"},
 				bson.M{"$sort": bson.M{"time": -1}},
@@ -264,7 +265,7 @@ func fetchPagingMessageLogs(operator model.User, page, size int) ([]model.Messag
 			}
 		} else if operator.Role == "admin" {
 			pipeline = []bson.M{
-				bson.M{"agency_id": operator.Agency.AgencyId},
+				bson.M{"agency_id": operator.AgencyId},
 				bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency"}},
 				bson.M{"unwind": "$agency"},
 				bson.M{"$sort": bson.M{"time": -1}},

@@ -15,9 +15,10 @@ const (
 
 /** 操作对象 */
 const (
-	OPERATE_TARGET_USER   = 10
-	OPERATE_TARGET_AGENCY = 11
-	OPERATE_TARGET_DEVICE = 12
+	OPERATE_TARGET_USER     = 1
+	OPERATE_TARGET_AGENCY   = 2
+	OPERATE_TARGET_DEVICE   = 3
+	OPERATE_TARGET_PASSWORD = 4
 )
 
 func WriteData(w http.ResponseWriter, res interface{}) {

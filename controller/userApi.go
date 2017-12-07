@@ -56,10 +56,16 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
+	if len(req.DeviceIds) > 0 {
+		err = UpsertDeviceIsBy(req.UserId, req.DeviceIds)
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
-		target := "用户[" + req.UserName + "]"
-		InsertOperateLog(OPERATE_TYPE_ADD, operator, target, r.RemoteAddr)
+		InsertOperateLog(OPERATE_TYPE_ADD, OPERATE_TARGET_USER, operator, req.UserName, r.RemoteAddr)
 	}
 
 	// 返回成功消息
@@ -98,7 +104,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证操作人是否有权限删除对象
-	status := verifyOperatorPermission(operator, user.Agency.AgencyId.Hex(), OPERATE_TARGET_USER)
+	status := verifyOperatorPermission(operator, user.AgencyId.Hex(), OPERATE_TARGET_USER)
 	if status != config.Success {
 		WriteData(w, config.NewError(status))
 		return
@@ -111,8 +117,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
-		target := "用户[" + user.UserId.Hex() + "]"
-		InsertOperateLog(OPERATE_TYPE_DELETE, operator, target, r.RemoteAddr)
+		InsertOperateLog(OPERATE_TYPE_DELETE, OPERATE_TARGET_USER, operator, user.UserId.Hex(), r.RemoteAddr)
 	}
 
 	// 返回成功消息
@@ -158,7 +163,7 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证操作人是否有权限修改对象
-	status := verifyOperatorPermission(operator, user.Agency.AgencyId.Hex(), OPERATE_TARGET_USER)
+	status := verifyOperatorPermission(operator, user.AgencyId.Hex(), OPERATE_TARGET_USER)
 	if status != config.Success {
 		WriteData(w, config.NewError(status))
 		return
@@ -169,10 +174,16 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
+	if len(req.DeviceIds) > 0 {
+		err = UpsertDeviceIsBy(req.UserId, req.DeviceIds)
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
-		target := "用户[" + user.UserId.Hex() + "]"
-		InsertOperateLog(OPERATE_TYPE_UPDATE, operator, target, r.RemoteAddr)
+		InsertOperateLog(OPERATE_TYPE_UPDATE, OPERATE_TARGET_USER, operator, user.UserId.Hex(), r.RemoteAddr)
 	}
 
 	// 返回成功消息
@@ -224,8 +235,7 @@ func UpdatePwd(w http.ResponseWriter, r *http.Request) {
 
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
-		target := "密码[" + user.UserId.Hex() + "]"
-		InsertOperateLog(OPERATE_TYPE_UPDATE, operator, target, r.RemoteAddr)
+		InsertOperateLog(OPERATE_TYPE_UPDATE, OPERATE_TARGET_PASSWORD, operator, user.UserId.Hex(), r.RemoteAddr)
 	}
 
 	// 返回成功消息
@@ -340,7 +350,6 @@ func addUserInfo(req model.UserReq) error {
 			"priority":   req.Priority,
 			"lasttime":   0,
 			"lastonip":   "",
-			"own_devids": req.OwnDevids,
 			"status":     config.USER_STATUS_NORMAL,
 			"createtime": time.Now().Unix(),
 			"updatetime": time.Now().Unix(),
@@ -370,7 +379,6 @@ func updateUserInfo(req model.UserReq) error {
 				"agency_id":  req.AgencyId,
 				"role":       req.Role,
 				"priority":   req.Priority,
-				"own_devids": req.OwnDevids,
 				"status":     req.Status,
 				"updatetime": time.Now().Unix(),
 			},
@@ -389,24 +397,48 @@ func updatePwd(req model.UserReq) error {
 	return SharedQuery(T_USER, query)
 }
 
+// 把用户可操作的设备ID列表插入到关联表中
+func UpsertDeviceIsBy(userId string, deviceIds []string) error {
+	query := func(c *mgo.Collection) error {
+		selector := bson.M{"user_id": bson.ObjectIdHex(userId)}
+		update := bson.M{"$set": bson.M{"device_ids": deviceIds}}
+		_, err := c.Upsert(selector, update)
+		return err
+	}
+	return SharedQuery(T_USER_DEVICES, query)
+}
+
 // 分页查询用户列表
 func fetchPagingUserList(operator model.User, page, size int) ([]model.User, error) {
+
+	if operator.Role == "customer" {
+		return nil, nil
+	}
+
 	var userList []model.User
 	query := func(c *mgo.Collection) error {
-		var pipeline []bson.M
-		if operator.Role == "root" {
-			pipeline = []bson.M{
-				bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency"}},
-				bson.M{"$skip": page * size},
-				bson.M{"$limit": size},
-			}
-		} else {
-			pipeline = []bson.M{
-				bson.M{"$match": bson.M{"agency_id": operator.Agency.AgencyId}},
-				bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency"}},
-				bson.M{"$skip": page * size},
-				bson.M{"$limit": size},
-			}
+		pipeline := []bson.M{
+			bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency"}},
+			bson.M{"$skip": page * size},
+			bson.M{"$limit": size},
+			bson.M{"$project": bson.M{
+				"user_id":            1,
+				"user_name":          1,
+				"gender":             1,
+				"birth":              1,
+				"mobile":             1,
+				"agency_id":          1,
+				"agency.agency_name": 1,
+				"role":               1,
+				"status":             1,
+				"last_login_time":    1,
+				"last_login_ip":      1,
+				"create_time":        1,
+				"update_time":        1,
+			}},
+		}
+		if operator.Role == "customer" {
+			pipeline = append(pipeline, bson.M{"$match": bson.M{"agency_id": operator.AgencyId}})
 		}
 		return c.Pipe(pipeline).All(&userList)
 	}
@@ -414,12 +446,54 @@ func fetchPagingUserList(operator model.User, page, size int) ([]model.User, err
 	return userList, err
 }
 
+// 根据用户ID查询可操作的设备列表
+func fetchDeviceCheckListBy(user model.User) ([]model.Device, error) {
+
+	// 1、先获取该用户机构下的所有设备
+	totalDevices, err := fetchDeviceListInAgecy(user.AgencyId)
+
+	// 2、再获取该用户可操作的设备列表
+	usedDevices, err := fetchDeviceListInUsed(user.UserId)
+
+	i := 0
+	for i; i < len(totalDevices); i++ {
+		device := totalDevices
+	}
+
+	return _, err
+}
+
+func fetchDeviceListInAgecy(agencyId bson.ObjectId) ([]model.Device, error) {
+	var devices []model.Device
+	query := func(c *mgo.Collection) error {
+		selector := bson.M{"agency_id": agencyId}
+		return c.Find(selector).All(&devices)
+	}
+	err := SharedQuery(T_DEVICE, query)
+	return devices, err
+}
+
+func fetchDeviceListInUsed(userId bson.ObjectId) ([]model.TempUserDevice, error) {
+	var usedDevices []model.TempUserDevice
+	query := func(c *mgo.Collection) error {
+		pipeline := []bson.M{
+			bson.M{"$match": bson.M{"user_id": userId}},
+			bson.M{"$unwind": "$device_ids"},
+			bson.M{"$lookup": bson.M{"from": T_DEVICE, "localField": "device_ids", "foreignField": "_id", "as": "device_docs"}},
+			bson.M{"$project": bson.M{"_id":0, "user_id":1, "device_docs._id":1, "device_docs.device_name":1}},
+		}
+		return c.Pipe(pipeline).One(&usedDevices)
+	}
+	err := SharedQuery(T_USER_DEVICES, query)
+	return usedDevices, err
+}
+
 // 验证操作人的权限
 func verifyOperatorPermission(operator model.User, agencyId string, target int64) int64 {
 	if operator.Role == "customer" {
 		return errorWithTarget(target)
 	} else if operator.Role == "admin" {
-		if len(agencyId) > 0 && agencyId == operator.Agency.AgencyId.Hex() {
+		if len(agencyId) > 0 && agencyId == operator.AgencyId.Hex() {
 			return config.Success
 		} else {
 			return errorWithTarget(target)

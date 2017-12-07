@@ -57,8 +57,7 @@ func AddDevice(w http.ResponseWriter, r *http.Request) {
 
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
-		target := "设备[" + req.DeviceId + "]"
-		InsertOperateLog(OPERATE_TYPE_ADD, operator, target, r.RemoteAddr)
+		InsertOperateLog(OPERATE_TYPE_ADD, OPERATE_TARGET_DEVICE, operator, req.DeviceId, r.RemoteAddr)
 	}
 
 	// 返回成功消息
@@ -154,8 +153,7 @@ func DeleteDevice(w http.ResponseWriter, r *http.Request) {
 
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
-		target := "设备[" + deviceId + "]"
-		InsertOperateLog(OPERATE_TYPE_DELETE, operator, target, r.RemoteAddr)
+		InsertOperateLog(OPERATE_TYPE_DELETE, OPERATE_TARGET_DEVICE, operator, deviceId, r.RemoteAddr)
 	}
 
 	// 返回成功消息
@@ -214,8 +212,7 @@ func EditDevice(w http.ResponseWriter, r *http.Request) {
 
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
-		target := "设备[" + req.DeviceId + "]"
-		InsertOperateLog(OPERATE_TYPE_UPDATE, operator, target, r.RemoteAddr)
+		InsertOperateLog(OPERATE_TYPE_UPDATE, OPERATE_TARGET_DEVICE, operator, req.DeviceId, r.RemoteAddr)
 	}
 
 	// 返回成功消息
@@ -350,21 +347,6 @@ func updateDeviceInfo(req model.DeviceReq) error {
 }
 
 func fetchPagingDeviceList(operator model.User, page, size int) ([]model.Device, error) {
-	//var deviceList []model.Device
-	//query := func(c *mgo.Collection) error {
-	//	var selector map[string]interface{}
-	//	if operator.Role == "root" {
-	//		selector = bson.M{"status": bson.M{"$gt": config.DEVICE_STATUS_INVALID}}
-	//	} else if operator.Role == "admin" {
-	//		selector = bson.M{"status": bson.M{"$gt": config.DEVICE_STATUS_INVALID}, "agency_id": operator.Agency.AgencyId}
-	//	} else {
-	//		selector = bson.M{"status": bson.M{"$gt": config.DEVICE_STATUS_INVALID}, "agency_id": operator.Agency.AgencyId}
-	//	}
-	//	return c.Find(selector).Skip(page * size).Limit(size).All(&deviceList)
-	//}
-	//err := SharedQuery(T_DEVICE, query)
-	//return deviceList, err
-
 	var deviceList []model.Device
 	query := func(c *mgo.Collection) error {
 		var pipeline []bson.M
