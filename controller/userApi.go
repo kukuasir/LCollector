@@ -447,7 +447,7 @@ func fetchPagingUserList(operator model.User, page, size int) ([]model.User, err
 }
 
 // 根据用户ID查询可操作的设备列表
-func fetchDeviceCheckListBy(user model.User) ([]model.Device, error) {
+func fetchDeviceCheckListBy(user model.User) ([]model.DeviceCheck, error) {
 
 	// 1、先获取该用户机构下的所有设备
 	totalDevices, err := fetchDeviceListInAgecy(user.AgencyId)
@@ -455,12 +455,24 @@ func fetchDeviceCheckListBy(user model.User) ([]model.Device, error) {
 	// 2、再获取该用户可操作的设备列表
 	usedDevices, err := fetchDeviceListInUsed(user.UserId)
 
-	i := 0
-	for i; i < len(totalDevices); i++ {
-		device := totalDevices
+	var deviceCheckList []model.DeviceCheck
+	for i := 0; i < len(totalDevices); i++ {
+		device := totalDevices[i]
+		var deviceCheck model.DeviceCheck
+		deviceCheck.DeviceId = device.DeviceId
+		deviceCheck.DeviceName = device.DeviceName
+		for j := 0; j < len(usedDevices); j++ {
+			temp := usedDevices[i]
+			if device.DeviceId == temp.Devices[0].DeviceId {
+				deviceCheck.Check = true
+			} else {
+				deviceCheck.Check = false
+			}
+		}
+		deviceCheckList[i] = deviceCheck
 	}
 
-	return _, err
+	return deviceCheckList, err
 }
 
 func fetchDeviceListInAgecy(agencyId bson.ObjectId) ([]model.Device, error) {
