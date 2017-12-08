@@ -4,15 +4,27 @@ import "gopkg.in/mgo.v2/bson"
 
 /** 设备信息 */
 type Device struct {
+	DeviceId   bson.ObjectId `json:"device_id" bson:"_id,omitempty"`            // 设备ID
+	DeviceName string        `json:"device_name" bson:"device_name"`            // 设备名称
+	AgencyId   bson.ObjectId `json:"agency_id" bson:"agency_id"`                // 所属机构ID
+	AgencyName string        `json:"agency_name,omitempty", bson:"agency_name"` // 所属组织机构名称
+	Latitude   float64       `json:"latitude"`                                  // 维度
+	Longitude  float64       `json:"longitude"`                                 // 经度
+	Status     int64         `json:"status"`                                    // 状态(-1:未分配  0:正常  1:报废)
+	CreateTime int64         `json:"create_time" bson:"create_time"`            // 创建时间
+	UpdateTime int64         `json:"update_time" bson:"update_time"`            // 最后更新时间
+}
+
+/** 临时-设备与组织机构关联信息 */
+type TempDevice struct {
 	DeviceId   bson.ObjectId `json:"device_id" bson:"_id,omitempty"` // 设备ID
 	DeviceName string        `json:"device_name" bson:"device_name"` // 设备名称
-	AgencyId   bson.ObjectId `json:"agency_id" bson:"agency_id"`     // 所属机构ID
-	Agency     Agency        `json:"agency" bson:"agency"`           // 所属机构
 	Latitude   float64       `json:"latitude"`                       // 维度
 	Longitude  float64       `json:"longitude"`                      // 经度
 	Status     int64         `json:"status"`                         // 状态(-1:未分配  0:正常  1:报废)
 	CreateTime int64         `json:"create_time" bson:"create_time"` // 创建时间
 	UpdateTime int64         `json:"update_time" bson:"update_time"` // 最后更新时间
+	AgencyId   bson.ObjectId `json:"agency_id" bson:"agency_id"`     // 所属组织机构ID
 }
 
 /** 设备 */

@@ -272,7 +272,6 @@ func FetchUserList(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	println(tempUsers)
 
 	// 转换到User表中
 	var userList []model.User
@@ -295,10 +294,16 @@ func FetchUserList(w http.ResponseWriter, r *http.Request) {
 		userList = append(userList, user)
 	}
 
+	var totalCount int64
+	if page == 1 {
+		totalCount, err = GetCount(T_USER)
+	}
+
 	// 返回查询结果
 	var userListRet model.UserListRet
 	userListRet.ResultInfo.Status = config.Success
 	userListRet.ResultInfo.Message = config.TIPS_QUERY_SUCCEED
+	userListRet.ResultInfo.Total = totalCount
 	userListRet.UserList = userList
 	WriteData(w, userListRet)
 }
@@ -441,6 +446,8 @@ func fetchPagingUserList(operator model.User, page, size int) ([]model.TempUser,
 	if operator.Role == "customer" {
 		return nil, nil
 	}
+
+	ValidPageValue(&page)
 
 	var tempUsers []model.TempUser
 	query := func(c *mgo.Collection) error {

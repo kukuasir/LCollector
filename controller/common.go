@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 /** 定义操作类型 */
@@ -34,4 +36,25 @@ func WriteData(w http.ResponseWriter, res interface{}) {
 	defer func() {
 		w.Write(data)
 	}()
+}
+
+// 查询列表的总个数
+func GetCount(coll string) (int64, error) {
+	var count int
+	query := func(c *mgo.Collection) error {
+		var err error
+		count, err = c.Find(bson.M{}).Count()
+		return err
+	}
+	err := SharedQuery(coll, query)
+	return int64(count), err
+}
+
+// 校验page的值
+func ValidPageValue(page *int) {
+	if *page > 0 {
+		*page = *page - 1
+	} else {
+		*page = 0
+	}
 }

@@ -51,6 +51,12 @@ func AddAgency(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 只有超级管理员才有权限操作组织机构
+	if operator.Role != "root" {
+		WriteData(w, config.NewError(config.PermissionDeniedAgency))
+		return
+	}
+
 	err = addAgencyInfo(req)
 	if err != nil {
 		panic(err)
@@ -96,14 +102,20 @@ func DeleteAgency(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 验证操作人是否有权限删除对象
-	status := verifyOperatorPermission(operator, agencyId, OPERATE_TARGET_AGENCY)
-	if status != config.Success {
-		WriteData(w, config.NewError(status))
+	// 只有超级管理员才有权限操作组织机构
+	if operator.Role != "root" {
+		WriteData(w, config.NewError(config.PermissionDeniedAgency))
 		return
 	}
 
+	// 删除该组织机构
 	err = deleteAgencyByID(agency.AgencyId)
+	if err != nil {
+		panic(err)
+	}
+
+	// 同时把改组织机构下的用户都置为无效
+	err = deleteUsersInAgency(agency.AgencyId, config.AGENCY_STATUS_INVALID)
 	if err != nil {
 		panic(err)
 	}
@@ -155,10 +167,9 @@ func EditAgency(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 验证操作人是否有权限修改对象
-	status := verifyOperatorPermission(operator, req.AgencyId, OPERATE_TARGET_USER)
-	if status != config.Success {
-		WriteData(w, config.NewError(status))
+	// 只有超级管理员才有权限操作组织机构
+	if operator.Role != "root" {
+		WriteData(w, config.NewError(config.PermissionDeniedAgency))
 		return
 	}
 
@@ -192,10 +203,16 @@ func FetchAgencyList(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
+	var totalCount int64
+	if page == 1 {
+		totalCount, err = GetCount(T_AGENCY)
+	}
+
 	// 返回查询结果
 	var agencyListRet model.AgencyListRet
 	agencyListRet.ResultInfo.Status = config.Success
 	agencyListRet.ResultInfo.Message = config.TIPS_QUERY_SUCCEED
+	agencyListRet.ResultInfo.Total = totalCount
 	agencyListRet.AgencyList = agencyList
 	WriteData(w, agencyListRet)
 }
@@ -276,6 +293,16 @@ func deleteAgencyByID(agencyId bson.ObjectId) error {
 	return SharedQuery(T_AGENCY, query)
 }
 
+// 修改该组织机构下的所有用户的状态
+func deleteUsersInAgency(agencyId bson.ObjectId, status int64) error {
+	query := func(c *mgo.Collection) error {
+		selector := bson.M{"agency_id": agencyId}
+		update := bson.M{"$set": bson.M{"status": status}}
+		return c.Update(selector, update)
+	}
+	return SharedQuery(T_USER, query)
+}
+
 // 修改组织机构信息
 func updateAgencyInfo(req model.AgencyReq) error {
 	query := func(c *mgo.Collection) error {
@@ -296,6 +323,11 @@ func updateAgencyInfo(req model.AgencyReq) error {
 
 // 分页查询组织机构信息
 func fetchPagingAgencyList(page, size int) ([]model.Agency, error) {
+
+	// page值校验
+	ValidPageValue(&page)
+
+	// 分页查询
 	var agencyList []model.Agency
 	query := func(c *mgo.Collection) error {
 		selector := bson.M{"status": bson.M{"$gt": config.AGENCY_STATUS_INVALID}}
