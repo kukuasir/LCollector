@@ -1,45 +1,44 @@
 package model
 
-import "gopkg.in/mgo.v2/bson"
+import (
+	"gopkg.in/mgo.v2/bson"
+)
 
 /** 用户信息 */
 type User struct {
-	UserId        bson.ObjectId `json:"user_id" bson:"_id,omitempty"`           // 用户唯一ID
-	UserName      string        `json:"user_name" bson:"user_name"`             // 用户名(不可重复)
-	Password      string        `json:"-"`                                      // 用户密码
-	Gender        int64         `json:"gender"`                                 // 性别(0:男 1:女)
-	Birth         string        `json:"birth"`                                  // 出生年月
-	Mobile        string        `json:"mobile"`                                 // 联系方式
-	AgencyId      bson.ObjectId `json:"agency_id" bson:"agency_id"`             // 所属组织机构ID
-	AgencyName    string        `json:"agency_name", bson:"agency_name"`        // 所属组织机构名称
-	Role          string        `json:"role"`                                   // 角色
-	Priority      string        `json:"priority"`                               // 设备查看方式的优先级
-	Status        int64         `json:"status"`                                 // 状态
-	Devices       []DeviceCheck `json:"devices"`                                // 可以查看或操作的设备列表
-	LastLoginTime int64         `json:"last_login_time" bson:"last_login_time"` // 最后一次登录时间
-	LastLoginIP   string        `json:"last_login_ip" bson:"last_login_ip"`     // 最后一次登录的IP
-	CreateTime    int64         `json:"create_time" bson:"create_time"`         // 创建时间
-	UpdateTime    int64         `json:"update_time" bson:"update_time"`         // 最后更新时间
+	UserId        bson.ObjectId `json:"user_id" bson:"_id,omitempty"`              // 用户唯一ID
+	UserName      string        `json:"user_name" bson:"user_name"`                // 用户名(不可重复)
+	Password      string        `json:"-"`                                         // 用户密码
+	Gender        int64         `json:"gender"`                                    // 性别(0:男 1:女)
+	Birth         string        `json:"birth,omitempty"`                           // 出生年月
+	Mobile        string        `json:"mobile,omitempty"`                          // 联系方式
+	AgencyId      bson.ObjectId `json:"agency_id" bson:"agency_id"`                // 所属组织机构ID
+	AgencyName    string        `json:"agency_name,omitempty", bson:"agency_name"` // 所属组织机构名称
+	Role          string        `json:"role"`                                      // 角色
+	Priority      string        `json:"priority,omitempty"`                        // 设备查看方式的优先级
+	Status        int64         `json:"status"`                                    // 状态
+	LastLoginTime int64         `json:"last_login_time" bson:"last_login_time"`    // 最后一次登录时间
+	LastLoginIP   string        `json:"last_login_ip" bson:"last_login_ip"`        // 最后一次登录的IP
+	CreateTime    int64         `json:"create_time" bson:"create_time"`            // 创建时间
+	UpdateTime    int64         `json:"update_time" bson:"update_time"`            // 最后更新时间
+	Devices       []DeviceCheck `json:"devices,omitempty"`                         // 可以查看或操作的设备列表
 }
 
 /** 临时-用户与组织机构关联信息 */
 type TempUser struct {
-	UserId        bson.ObjectId `json:"user_id" bson:"_id,omitempty"`           // 用户唯一ID
-	UserName      string        `json:"user_name" bson:"user_name"`             // 用户名(不可重复)
-	AgencyId      bson.ObjectId `json:"agency_id" bson:"agency_id"`             // 所属组织机构ID
-	Role          string        `json:"role"`                                   // 角色
-	Status        int64         `json:"status"`                                 // 状态
-	LastLoginTime int64         `json:"last_login_time" bson:"last_login_time"` // 最后一次登录时间
-	LastLoginIP   string        `json:"last_login_ip" bson:"last_login_ip"`     // 最后一次登录的IP
-	CreateTime    int64         `json:"create_time" bson:"create_time"`         // 创建时间
-	UpdateTime    int64         `json:"update_time" bson:"update_time"`         // 最后更新时间
-	AgencyDocs    []Agency      `json:"agency_docs"`                            // 组织机构列表
-}
-
-/** 临时-用户与设备关联信息 */
-type TempUserDevice struct {
-	UserId     bson.ObjectId `json:"user_id"`     // 用户唯一ID
-	DeviceDocs []Device      `json:"device_docs"` // 设备列表
+	UserId        bson.ObjectId   `json:"user_id" bson:"_id,omitempty"`           // 用户唯一ID
+	UserName      string          `json:"user_name" bson:"user_name"`             // 用户名(不可重复)
+	Gender        int64           `json:"gender"`                                 // 性别(0:男 1:女)
+	AgencyId      bson.ObjectId   `json:"agency_id" bson:"agency_id"`             // 所属组织机构ID
+	Role          string          `json:"role"`                                   // 角色
+	Status        int64           `json:"status"`                                 // 状态
+	LastLoginTime int64           `json:"last_login_time" bson:"last_login_time"` // 最后一次登录时间
+	LastLoginIP   string          `json:"last_login_ip" bson:"last_login_ip"`     // 最后一次登录的IP
+	CreateTime    int64           `json:"create_time" bson:"create_time"`         // 创建时间
+	UpdateTime    int64           `json:"update_time" bson:"update_time"`         // 最后更新时间
+	AgencyNames   []string        `json:"agency_names" bson:"agency_names"`       // 组织机构名列表
+	DeviceIds     []bson.ObjectId `json:"device_ids" bson:"device_ids"`           // 设备名ID列表
+	DeviceNames   []string        `json:"device_names" bson:"device_names"`       // 设备名列表
 }
 
 /** 用于添加或修改用户信息请求的结构体 */

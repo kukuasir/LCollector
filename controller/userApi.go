@@ -272,6 +272,7 @@ func FetchUserList(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
+	println(tempUsers)
 
 	// 转换到User表中
 	var userList []model.User
@@ -280,6 +281,7 @@ func FetchUserList(w http.ResponseWriter, r *http.Request) {
 		var user model.User
 		user.UserId = temp.UserId
 		user.UserName = temp.UserName
+		user.Gender = temp.Gender
 		user.AgencyId = temp.AgencyId
 		user.Role = temp.Role
 		user.Status = temp.Status
@@ -287,10 +289,10 @@ func FetchUserList(w http.ResponseWriter, r *http.Request) {
 		user.LastLoginIP = temp.LastLoginIP
 		user.CreateTime = temp.CreateTime
 		user.UpdateTime = temp.UpdateTime
-		if len(temp.AgencyDocs) > 0 {
-			user.AgencyName = temp.AgencyDocs[0].AgencyName
+		if len(temp.AgencyNames) > 0 {
+			user.AgencyName = temp.AgencyNames[0]
 		}
-		userList[i] = user
+		userList = append(userList, user)
 	}
 
 	// 返回查询结果
@@ -430,7 +432,7 @@ func UpsertDeviceIsBy(userId string, deviceIds []string) error {
 		_, err := c.Upsert(selector, update)
 		return err
 	}
-	return SharedQuery(T_USER_DEVICES, query)
+	return SharedQuery(T_USER, query)
 }
 
 // 分页查询用户列表
@@ -443,26 +445,24 @@ func fetchPagingUserList(operator model.User, page, size int) ([]model.TempUser,
 	var tempUsers []model.TempUser
 	query := func(c *mgo.Collection) error {
 		pipeline := []bson.M{
-			bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency"}},
 			bson.M{"$skip": page * size},
 			bson.M{"$limit": size},
+			bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency_docs"}},
 			bson.M{"$project": bson.M{
-				"_id":            1,
-				"user_name":          1,
-				"gender":             1,
-				"birth":              1,
-				"mobile":             1,
-				"agency_id":          1,
-				"agency.agency_name": 1,
-				"role":               1,
-				"status":             1,
-				"last_login_time":    1,
-				"last_login_ip":      1,
-				"create_time":        1,
-				"update_time":        1,
+				"_id":             1,
+				"user_name":       1,
+				"gender":          1,
+				"agency_id":       1,
+				"role":            1,
+				"status":          1,
+				"last_login_time": 1,
+				"last_login_ip":   1,
+				"create_time":     1,
+				"update_time":     1,
+				"agency_names":    "$agency_docs.agency_name",
 			}},
 		}
-		if operator.Role == "customer" {
+		if operator.Role == "admin" {
 			pipeline = append(pipeline, bson.M{"$match": bson.M{"agency_id": operator.AgencyId}})
 		}
 		return c.Pipe(pipeline).All(&tempUsers)
@@ -480,22 +480,24 @@ func fetchDeviceCheckListBy(user model.User) ([]model.DeviceCheck, error) {
 	// 2、再获取该用户可操作的设备列表
 	usedDevices, err := fetchDeviceListInUsed(user.UserId)
 
+	// 3、对用户可使用的设备进行判断
 	var deviceCheckList []model.DeviceCheck
-	var temp model.TempUserDevice
-	var device model.Device
-	for i := 0; i < len(usedDevices); i++ {
-		temp = usedDevices[i]
-		for j := 0; j < len(totalDevices); j++ {
-			device = totalDevices[i]
-			if device.DeviceId == temp.DeviceDocs[0].DeviceId {
-				var deviceCheck model.DeviceCheck
-				deviceCheck.DeviceId = device.DeviceId
-				deviceCheck.DeviceName = device.DeviceName
-				deviceCheck.Check = true
-				deviceCheckList[i] = deviceCheck
-				break
+	for i := 0; i < len(totalDevices); i++ {
+		temp := totalDevices[i]
+		var deviceCheck model.DeviceCheck
+		deviceCheck.DeviceId = temp.DeviceId
+		deviceCheck.DeviceName = temp.DeviceName
+		deviceCheck.Check = false
+		for j := 0; j < len(usedDevices); j++ {
+			device := usedDevices[j]
+			if len(device.DeviceIds) > 0 {
+				if device.DeviceIds[0] == temp.DeviceId {
+					deviceCheck.Check = true
+					break
+				}
 			}
 		}
+		deviceCheckList = append(deviceCheckList, deviceCheck)
 	}
 
 	return deviceCheckList, err
@@ -511,18 +513,18 @@ func fetchDeviceListInAgecy(agencyId bson.ObjectId) ([]model.Device, error) {
 	return devices, err
 }
 
-func fetchDeviceListInUsed(userId bson.ObjectId) ([]model.TempUserDevice, error) {
-	var usedDevices []model.TempUserDevice
+func fetchDeviceListInUsed(userId bson.ObjectId) ([]model.TempUser, error) {
+	var usedDevices []model.TempUser
 	query := func(c *mgo.Collection) error {
 		pipeline := []bson.M{
-			bson.M{"$match": bson.M{"user_id": userId}},
+			bson.M{"$match": bson.M{"_id": userId}},
 			bson.M{"$unwind": "$device_ids"},
 			bson.M{"$lookup": bson.M{"from": T_DEVICE, "localField": "device_ids", "foreignField": "_id", "as": "device_docs"}},
-			bson.M{"$project": bson.M{"_id":0, "user_id":1, "device_docs._id":1, "device_docs.device_name":1}},
+			bson.M{"$project": bson.M{"_id": 1, "device_ids": "$device_docs._id", "device_names": "$device_docs.device_name"}},
 		}
-		return c.Pipe(pipeline).One(&usedDevices)
+		return c.Pipe(pipeline).All(&usedDevices)
 	}
-	err := SharedQuery(T_USER_DEVICES, query)
+	err := SharedQuery(T_USER, query)
 	return usedDevices, err
 }
 

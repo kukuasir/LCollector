@@ -9,7 +9,6 @@ import (
 const (
 	T_USER         = "t_user"         // 用户信息表
 	T_DEVICE       = "t_device"       // 设备信息表
-	T_USER_DEVICES = "t_user_devices" // 用户与设备关联表
 	T_AGENCY       = "t_agency"       // 组织机构信息表
 	T_LOGIN_LOG    = "t_login_log"    // 登录日志表
 	T_OPERATE_LOG  = "t_operate_log"  // 操作日志表
