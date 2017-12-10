@@ -32,7 +32,7 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证操作人是否存在
-	operator, err := queryUserByID(req.OperatorId)
+	operator, err := queryUserBaseInfo(req.OperatorId)
 	if err != nil {
 		panic(err)
 	}
@@ -65,7 +65,7 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
-		InsertOperateLog(OPERATE_TYPE_ADD, OPERATE_TARGET_USER, operator, req.UserName, r.RemoteAddr)
+		InsertOperateLog(model.OPERATE_TYPE_ADD, model.OPERATE_TARGET_USER, operator, req.UserName, r.RemoteAddr)
 	}
 
 	// 返回成功消息
@@ -84,7 +84,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	userId := r.URL.Query().Get("user_id")
 
 	// 验证操作人是否存在
-	operator, err := queryUserByID(operatorId)
+	operator, err := queryUserBaseInfo(operatorId)
 	if err != nil {
 		panic(err)
 	}
@@ -94,7 +94,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证需要删除的用户是否存在
-	user, err := queryUserByID(userId)
+	user, err := queryUserBaseInfo(userId)
 	if err != nil {
 		panic(err)
 	}
@@ -104,7 +104,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证操作人是否有权限删除对象
-	status := verifyOperatorPermission(operator, user.AgencyId.Hex(), OPERATE_TARGET_USER)
+	status := verifyOperatorPermission(operator, user.AgencyId.Hex(), model.OPERATE_TARGET_USER)
 	if status != config.Success {
 		WriteData(w, config.NewError(status))
 		return
@@ -117,7 +117,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
-		InsertOperateLog(OPERATE_TYPE_DELETE, OPERATE_TARGET_USER, operator, user.UserId.Hex(), r.RemoteAddr)
+		InsertOperateLog(model.OPERATE_TYPE_DELETE, model.OPERATE_TARGET_USER, operator, user.UserId.Hex(), r.RemoteAddr)
 	}
 
 	// 返回成功消息
@@ -143,7 +143,7 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证操作人是否存在
-	operator, err := queryUserByID(req.OperatorId)
+	operator, err := queryUserBaseInfo(req.OperatorId)
 	if err != nil {
 		panic(err)
 	}
@@ -153,7 +153,7 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证需要修改的用户是否存在
-	user, err := queryUserByID(req.UserId)
+	user, err := queryUserBaseInfo(req.UserId)
 	if err != nil {
 		panic(err)
 	}
@@ -163,7 +163,7 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证操作人是否有权限修改对象
-	status := verifyOperatorPermission(operator, user.AgencyId.Hex(), OPERATE_TARGET_USER)
+	status := verifyOperatorPermission(operator, user.AgencyId.Hex(), model.OPERATE_TARGET_USER)
 	if status != config.Success {
 		WriteData(w, config.NewError(status))
 		return
@@ -183,7 +183,7 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
-		InsertOperateLog(OPERATE_TYPE_UPDATE, OPERATE_TARGET_USER, operator, user.UserId.Hex(), r.RemoteAddr)
+		InsertOperateLog(model.OPERATE_TYPE_UPDATE, model.OPERATE_TARGET_USER, operator, user.UserId.Hex(), r.RemoteAddr)
 	}
 
 	// 返回成功消息
@@ -209,7 +209,7 @@ func UpdatePwd(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证操作人是否存在
-	operator, err := queryUserByID(req.OperatorId)
+	operator, err := queryUserBaseInfo(req.OperatorId)
 	if err != nil {
 		panic(err)
 	}
@@ -219,7 +219,7 @@ func UpdatePwd(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证用户是否存在
-	user, err := queryUserByID(req.UserId)
+	user, err := queryUserBaseInfo(req.UserId)
 	if err != nil {
 		panic(err)
 	}
@@ -235,7 +235,7 @@ func UpdatePwd(w http.ResponseWriter, r *http.Request) {
 
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
-		InsertOperateLog(OPERATE_TYPE_UPDATE, OPERATE_TARGET_PASSWORD, operator, user.UserId.Hex(), r.RemoteAddr)
+		InsertOperateLog(model.OPERATE_TYPE_UPDATE, model.OPERATE_TARGET_PASSWORD, operator, user.UserId.Hex(), r.RemoteAddr)
 	}
 
 	// 返回成功消息
@@ -259,7 +259,7 @@ func FetchUserList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证操作人是否存在
-	operator, err := queryUserByID(operatorId)
+	operator, err := queryUserBaseInfo(operatorId)
 	if err != nil {
 		panic(err)
 	}
@@ -319,7 +319,7 @@ func GetUserInfo(w http.ResponseWriter, r *http.Request) {
 	userId := r.URL.Query().Get("user_id")
 
 	// 验证操作人是否存在
-	operator, err := queryUserByID(operatorId)
+	operator, err := queryUserBaseInfo(operatorId)
 	if err != nil {
 		panic(err)
 	}
@@ -329,10 +329,26 @@ func GetUserInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证需要查询的用户是否存在
-	user, err := queryUserByID(userId)
+	temp, err := fetchUserInfo(userId)
 	if err != nil {
 		panic(err)
 	}
+
+	var user model.User
+	user.UserId = temp.UserId
+	user.UserName = temp.UserName
+	user.Gender = temp.Gender
+	user.AgencyId = temp.AgencyId
+	user.Role = temp.Role
+	user.Status = temp.Status
+	user.LastLoginTime = temp.LastLoginTime
+	user.LastLoginIP = temp.LastLoginIP
+	user.CreateTime = temp.CreateTime
+	user.UpdateTime = temp.UpdateTime
+	if len(temp.AgencyNames) > 0 {
+		user.AgencyName = temp.AgencyNames[0]
+	}
+
 	if !ExistUser(user) {
 		WriteData(w, config.UserHasNotExists)
 		return
@@ -354,15 +370,11 @@ func GetUserInfo(w http.ResponseWriter, r *http.Request) {
 ////=========== Private Methods ===========
 
 // 根据用户ID获取用户信息
-func queryUserByID(userId string) (model.User, error) {
+func queryUserBaseInfo(userId string) (model.User, error) {
 	var user model.User
 	objId := bson.ObjectIdHex(userId)
 	query := func(c *mgo.Collection) error {
-		pipeline := []bson.M{
-			bson.M{"$match": bson.M{"_id": objId}},
-			bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency"}},
-		}
-		return c.Pipe(pipeline).One(&user)
+		return c.FindId(objId).One(&user)
 	}
 	err := SharedQuery(T_USER, query)
 	return user, err
@@ -535,6 +547,33 @@ func fetchDeviceListInUsed(userId bson.ObjectId) ([]model.TempUser, error) {
 	return usedDevices, err
 }
 
+func fetchUserInfo(userId string) (model.TempUser, error) {
+	var tempUser model.TempUser
+	objId := bson.ObjectIdHex(userId)
+	query := func(c *mgo.Collection) error {
+		pipeline := []bson.M{
+			bson.M{"$match": bson.M{"_id": objId}},
+			bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency_docs"}},
+			bson.M{"$project": bson.M{
+				"_id":             1,
+				"user_name":       1,
+				"gender":          1,
+				"agency_id":       1,
+				"role":            1,
+				"status":          1,
+				"last_login_time": 1,
+				"last_login_ip":   1,
+				"create_time":     1,
+				"update_time":     1,
+				"agency_names":    "$agency_docs.agency_name",
+			}},
+		}
+		return c.Pipe(pipeline).One(&tempUser)
+	}
+	err := SharedQuery(T_USER, query)
+	return tempUser, err
+}
+
 // 验证操作人的权限
 func verifyOperatorPermission(operator model.User, agencyId string, target int64) int64 {
 	if operator.Role == "customer" {
@@ -551,18 +590,13 @@ func verifyOperatorPermission(operator model.User, agencyId string, target int64
 
 func errorWithTarget(target int64) int64 {
 	switch target {
-	case OPERATE_TARGET_USER:
+	case model.OPERATE_TARGET_USER:
 		return config.PermissionDeniedUser
-	case OPERATE_TARGET_AGENCY:
+	case model.OPERATE_TARGET_AGENCY:
 		return config.PermissionDeniedAgency
-	case OPERATE_TARGET_DEVICE:
+	case model.OPERATE_TARGET_DEVICE:
 		return config.PermissionDeniedDevice
 	default:
 		return config.Success
 	}
-}
-
-// 验证是否存在该用户
-func ExistUser(user model.User) bool {
-	return user.Status > config.USER_STATUS_INVALID && len(user.UserId) > 0
 }

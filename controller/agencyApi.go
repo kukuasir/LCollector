@@ -32,12 +32,18 @@ func AddAgency(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证操作人是否存在
-	operator, err := queryUserByID(req.OperatorId)
+	operator, err := queryUserBaseInfo(req.OperatorId)
 	if err != nil {
 		panic(err)
 	}
 	if !ExistUser(operator) {
 		WriteData(w, config.OperaterHasNotExists)
+		return
+	}
+
+	// 只有超级管理员才有权限操作组织机构
+	if operator.Role != "root" {
+		WriteData(w, config.NewError(config.PermissionDeniedAgency))
 		return
 	}
 
@@ -51,12 +57,6 @@ func AddAgency(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 只有超级管理员才有权限操作组织机构
-	if operator.Role != "root" {
-		WriteData(w, config.NewError(config.PermissionDeniedAgency))
-		return
-	}
-
 	err = addAgencyInfo(req)
 	if err != nil {
 		panic(err)
@@ -64,7 +64,7 @@ func AddAgency(w http.ResponseWriter, r *http.Request) {
 
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
-		InsertOperateLog(OPERATE_TYPE_ADD, OPERATE_TARGET_AGENCY, operator, req.AgencyName, r.RemoteAddr)
+		InsertOperateLog(model.OPERATE_TYPE_ADD, model.OPERATE_TARGET_AGENCY, operator, req.AgencyName, r.RemoteAddr)
 	}
 
 	// 返回成功消息
@@ -83,12 +83,18 @@ func DeleteAgency(w http.ResponseWriter, r *http.Request) {
 	agencyId := r.URL.Query().Get("agency_id")
 
 	// 验证操作人是否存在
-	operator, err := queryUserByID(operatorId)
+	operator, err := queryUserBaseInfo(operatorId)
 	if err != nil {
 		panic(err)
 	}
 	if !ExistUser(operator) {
 		WriteData(w, config.OperaterHasNotExists)
+		return
+	}
+
+	// 只有超级管理员才有权限操作组织机构
+	if operator.Role != "root" {
+		WriteData(w, config.NewError(config.PermissionDeniedAgency))
 		return
 	}
 
@@ -99,12 +105,6 @@ func DeleteAgency(w http.ResponseWriter, r *http.Request) {
 	}
 	if !ExistAgency(agency) {
 		WriteData(w, config.AgencyHasNotExists)
-		return
-	}
-
-	// 只有超级管理员才有权限操作组织机构
-	if operator.Role != "root" {
-		WriteData(w, config.NewError(config.PermissionDeniedAgency))
 		return
 	}
 
@@ -122,7 +122,7 @@ func DeleteAgency(w http.ResponseWriter, r *http.Request) {
 
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
-		InsertOperateLog(OPERATE_TYPE_DELETE, OPERATE_TARGET_DEVICE, operator, agencyId, r.RemoteAddr)
+		InsertOperateLog(model.OPERATE_TYPE_DELETE, model.OPERATE_TARGET_DEVICE, operator, agencyId, r.RemoteAddr)
 	}
 
 	// 返回成功消息
@@ -148,12 +148,18 @@ func EditAgency(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证操作人是否存在
-	operator, err := queryUserByID(req.OperatorId)
+	operator, err := queryUserBaseInfo(req.OperatorId)
 	if err != nil {
 		panic(err)
 	}
 	if !ExistUser(operator) {
 		WriteData(w, config.OperaterHasNotExists)
+		return
+	}
+
+	// 只有超级管理员才有权限操作组织机构
+	if operator.Role != "root" {
+		WriteData(w, config.NewError(config.PermissionDeniedAgency))
 		return
 	}
 
@@ -167,12 +173,6 @@ func EditAgency(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 只有超级管理员才有权限操作组织机构
-	if operator.Role != "root" {
-		WriteData(w, config.NewError(config.PermissionDeniedAgency))
-		return
-	}
-
 	err = updateAgencyInfo(req)
 	if err != nil {
 		panic(err)
@@ -180,7 +180,7 @@ func EditAgency(w http.ResponseWriter, r *http.Request) {
 
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
-		InsertOperateLog(OPERATE_TYPE_UPDATE, OPERATE_TARGET_AGENCY, operator, req.AgencyId, r.RemoteAddr)
+		InsertOperateLog(model.OPERATE_TYPE_UPDATE, model.OPERATE_TARGET_AGENCY, operator, req.AgencyId, r.RemoteAddr)
 	}
 
 	// 返回成功消息
@@ -335,12 +335,4 @@ func fetchPagingAgencyList(page, size int) ([]model.Agency, error) {
 	}
 	err := SharedQuery(T_AGENCY, query)
 	return agencyList, err
-}
-
-// 判断组织机构是否存在
-func ExistAgency(agency model.Agency) bool {
-	if len(agency.AgencyId) == 0 {
-		return false
-	}
-	return true
 }

@@ -23,7 +23,7 @@ func FetchMessageLogList(w http.ResponseWriter, r *http.Request) {
 	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
 
 	// 验证操作人是否存在
-	operator, err := queryUserByID(operatorId)
+	operator, err := queryUserBaseInfo(operatorId)
 	if err != nil {
 		panic(err)
 	}
@@ -57,7 +57,7 @@ func FetchOperateLogList(w http.ResponseWriter, r *http.Request) {
 	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
 
 	// 验证操作人是否存在
-	operator, err := queryUserByID(operatorId)
+	operator, err := queryUserBaseInfo(operatorId)
 	if err != nil {
 		panic(err)
 	}
@@ -91,7 +91,7 @@ func FetchLoginLogList(w http.ResponseWriter, r *http.Request) {
 	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
 
 	// 验证操作人是否存在
-	operator, err := queryUserByID(operatorId)
+	operator, err := queryUserBaseInfo(operatorId)
 	if err != nil {
 		panic(err)
 	}
@@ -154,11 +154,11 @@ func InsertOperateLog(mode int64, target int64, operator model.User, object stri
 }
 
 // 插入消息日志
-func InsertMessageLog(deviceId string, agencyId string, content string, ipaddr string) bool {
+func InsertMessageLog(msgType int64, deviceId string, content string, ipaddr string) bool {
 	query := func(c *mgo.Collection) error {
 		selector := bson.M{
+			"type":        msgType,
 			"device_id":   deviceId,
-			"agency_id":   agencyId,
 			"content":     content,
 			"create_time": time.Now().Unix(),
 			"source_ip":   ipaddr,
