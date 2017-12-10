@@ -195,17 +195,23 @@ func FetchAgencyList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//operatorId := r.URL.Query().Get("operator_id")
+	//if len(operatorId) == 0 {
+	//	WriteData(w, config.NewError(config.InvalidParameterValue))
+	//	return
+	//}
+
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
-
-	agencyList, err := fetchPagingAgencyList(page, size)
-	if err != nil {
-		panic(err)
+	if size == 0 {
+		size = 20
 	}
+
+	agencyList, _ := fetchPagingAgencyList(page, size)
 
 	var totalCount int64
 	if page == 1 {
-		totalCount, err = GetCount(T_AGENCY)
+		totalCount, _ = GetCount(T_AGENCY)
 	}
 
 	// 返回查询结果
@@ -224,15 +230,18 @@ func GetAgencyInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//operatorId := r.URL.Query().Get("operator_id")
 	agencyId := r.URL.Query().Get("agency_id")
 
-	// 验证需要查询的用户是否存在
-	agency, err := queryAgencyInfoByID(agencyId)
-	if err != nil {
-		panic(err)
+	if len(agencyId) == 0 {
+		WriteData(w, config.NewError(config.InvalidParameterValue))
+		return
 	}
+
+	// 验证需要查询的用户是否存在
+	agency, _ := queryAgencyInfoByID(agencyId)
 	if !ExistAgency(agency) {
-		WriteData(w, config.AgencyHasNotExists)
+		WriteData(w, config.NewError(config.AgencyHasNotExists))
 		return
 	}
 
