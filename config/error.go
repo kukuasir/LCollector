@@ -46,7 +46,7 @@ const (
 type NSError struct {
 	Code    int64
 	Name    string
-	Message string
+	Message string `json:"msg"`
 }
 
 var errors []NSError

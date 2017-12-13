@@ -225,9 +225,13 @@ func UpdatePwd(w http.ResponseWriter, r *http.Request) {
 func FetchUserList(w http.ResponseWriter, r *http.Request) {
 
 	operatorId := r.URL.Query().Get("operator_id")
+	if len(operatorId) == 0 {
+		WriteData(w, config.NewError(config.InvalidParameterValue))
+		return
+	}
+
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
-
 	if size == 0 {
 		size = 20
 	}
@@ -286,6 +290,11 @@ func GetUserInfo(w http.ResponseWriter, r *http.Request) {
 
 	operatorId := r.URL.Query().Get("operator_id")
 	userId := r.URL.Query().Get("user_id")
+
+	if len(operatorId) == 0 || len(userId) == 0 {
+		WriteData(w, config.NewError(config.InvalidParameterValue))
+		return
+	}
 
 	// 验证操作人是否存在
 	operator, err := queryUserBaseInfo(operatorId)
@@ -462,11 +471,11 @@ func fetchPagingUserList(operator model.User, page, size int) ([]model.TempUser,
 // 根据用户ID查询可操作的设备列表
 func fetchDeviceCheckListBy(user model.User) ([]model.DeviceCheck, error) {
 
-	// 1、先获取该用户机构下的所有设备
+	// 1、先获取该用户机构下未被删除的所有设备
 	totalDevices, err := fetchDeviceListInAgecy(user.AgencyId)
 
 	// 2、再获取该用户可操作的设备列表
-	usedDevices, err := fetchDeviceListInUsed(user.UserId)
+	deviceDocs, err := fetchDeviceListInUsed(user.UserId)
 
 	// 3、对用户可使用的设备进行判断
 	var deviceCheckList []model.DeviceCheck
@@ -476,10 +485,10 @@ func fetchDeviceCheckListBy(user model.User) ([]model.DeviceCheck, error) {
 		deviceCheck.DeviceId = temp.DeviceId
 		deviceCheck.DeviceName = temp.DeviceName
 		deviceCheck.Check = false
-		for j := 0; j < len(usedDevices); j++ {
-			device := usedDevices[j]
-			if len(device.DeviceIds) > 0 {
-				if device.DeviceIds[0] == temp.DeviceId {
+		for j := 0; j < len(deviceDocs); j++ {
+			usedDevice := deviceDocs[j].UsableDevices[0]
+			if len(usedDevice.DeviceId) > 0 && usedDevice.Status > config.DEVICE_STATUS_INVALID {
+				if usedDevice.DeviceId == temp.DeviceId {
 					deviceCheck.Check = true
 					break
 				}
@@ -494,7 +503,7 @@ func fetchDeviceCheckListBy(user model.User) ([]model.DeviceCheck, error) {
 func fetchDeviceListInAgecy(agencyId bson.ObjectId) ([]model.Device, error) {
 	var devices []model.Device
 	query := func(c *mgo.Collection) error {
-		selector := bson.M{"agency_id": agencyId}
+		selector := bson.M{"agency_id": agencyId, "status": bson.M{"$gt": config.DEVICE_STATUS_INVALID}}
 		return c.Find(selector).All(&devices)
 	}
 	err := SharedQuery(T_DEVICE, query)
@@ -508,7 +517,16 @@ func fetchDeviceListInUsed(userId bson.ObjectId) ([]model.TempUser, error) {
 			bson.M{"$match": bson.M{"_id": userId}},
 			bson.M{"$unwind": "$device_ids"},
 			bson.M{"$lookup": bson.M{"from": T_DEVICE, "localField": "device_ids", "foreignField": "_id", "as": "device_docs"}},
-			bson.M{"$project": bson.M{"_id": 1, "device_ids": "$device_docs._id", "device_names": "$device_docs.device_name"}},
+			bson.M{"$project": bson.M{
+				"_id":                     1,
+				"device_docs._id":         1,
+				"device_docs.device_name": 1,
+				"device_docs.latitude":    1,
+				"device_docs.longitude":   1,
+				"device_docs.status":      1,
+				"device_docs.create_time": 1,
+				"device_docs.update_time": 1,
+			}},
 		}
 		return c.Pipe(pipeline).All(&usedDevices)
 	}

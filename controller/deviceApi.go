@@ -42,7 +42,7 @@ func AddDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证需要添加的设备是否存在，存在则不能重复添加
-	device, err := queryDeviceInfoByID(req.DeviceId)
+	device, err := queryDeviceBaseInfo(req.DeviceId)
 	if err != nil {
 		panic(err)
 	}
@@ -84,7 +84,7 @@ func RegisterDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证需要添加的设备是否存在，存在则不能重复添加
-	device, err := queryDeviceInfoByID(req.DeviceId)
+	device, err := queryDeviceBaseInfo(req.DeviceId)
 	if err != nil {
 		panic(err)
 	}
@@ -131,7 +131,7 @@ func DeleteDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证需要删除的设备是否存在
-	device, err := queryDeviceInfoByID(deviceId)
+	device, err := queryDeviceBaseInfo(deviceId)
 	if err != nil {
 		panic(err)
 	}
@@ -178,7 +178,7 @@ func EditDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证需要修改的设备是否存在
-	device, err := queryDeviceInfoByID(req.DeviceId)
+	device, err := queryDeviceBaseInfo(req.DeviceId)
 	if err != nil {
 		panic(err)
 	}
@@ -212,8 +212,16 @@ func EditDevice(w http.ResponseWriter, r *http.Request) {
 func FetchDeviceList(w http.ResponseWriter, r *http.Request) {
 
 	operatorId := r.URL.Query().Get("operator_id")
+	if len(operatorId) == 0 {
+		WriteData(w, config.NewError(config.InvalidParameterValue))
+		return
+	}
+
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
+	if size == 0 {
+		size = 20
+	}
 
 	// 验证操作人是否存在
 	operator, err := queryUserBaseInfo(operatorId)
@@ -225,33 +233,58 @@ func FetchDeviceList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tempDevices, err := fetchPagingDeviceList(operator, page, size)
-	if err != nil {
-		panic(err)
+	var deviceList []model.Device
+
+	if operator.Role == "customer" {
+		usedDevices, err := fetchDeviceListInUsed(operator.UserId)
+		if err != nil {
+			panic(err)
+		}
+		// 转换到Device表中
+		for i := 0; i < len(usedDevices); i++ {
+			temp := usedDevices[i].UsableDevices[0]
+			var device model.Device
+			device.DeviceId = temp.DeviceId
+			device.DeviceName = temp.DeviceName
+			device.Latitude = temp.Latitude
+			device.Longitude = temp.Longitude
+			device.CreateTime = temp.CreateTime
+			device.UpdateTime = temp.UpdateTime
+			deviceList = append(deviceList, device)
+		}
+	} else {
+		tempDevices, err := fetchPagingDeviceList(operator, page, size)
+		if err != nil {
+			panic(err)
+		}
+		// 转换到Device表中
+		for i := 0; i < len(tempDevices); i++ {
+			temp := tempDevices[i]
+			var device model.Device
+			device.DeviceId = temp.DeviceId
+			device.DeviceName = temp.DeviceName
+			device.AgencyId = temp.AgencyId
+			device.Latitude = temp.Latitude
+			device.Longitude = temp.Longitude
+			device.CreateTime = temp.CreateTime
+			device.UpdateTime = temp.UpdateTime
+			if len(temp.AgencyNames) > 0 {
+				device.AgencyName = temp.AgencyNames[0]
+			}
+			deviceList = append(deviceList, device)
+		}
 	}
 
-	// 转换到Device表中
-	var deviceList []model.Device
-	for i := 0; i < len(tempDevices); i++ {
-		temp := tempDevices[i]
-		var device model.Device
-		device.DeviceId = temp.DeviceId
-		device.DeviceName = temp.DeviceName
-		device.AgencyId = temp.AgencyId
-		device.Latitude = temp.Latitude
-		device.Longitude = temp.Longitude
-		device.CreateTime = temp.CreateTime
-		device.UpdateTime = temp.UpdateTime
-		if len(temp.AgencyNames) > 0 {
-			device.AgencyName = temp.AgencyNames[0]
-		}
-		deviceList = append(deviceList, device)
+	var totalCount int64
+	if page == 1 {
+		totalCount, err = GetCount(T_AGENCY)
 	}
 
 	// 返回查询结果
 	var deviceListRet model.DeviceListRet
 	deviceListRet.ResultInfo.Status = config.Success
 	deviceListRet.ResultInfo.Message = config.TIPS_QUERY_SUCCEED
+	deviceListRet.ResultInfo.Total = totalCount
 	deviceListRet.DeviceList = deviceList
 	WriteData(w, deviceListRet)
 }
@@ -260,6 +293,11 @@ func GetDeviceInfo(w http.ResponseWriter, r *http.Request) {
 
 	operatorId := r.URL.Query().Get("operator_id")
 	deviceId := r.URL.Query().Get("device_id")
+
+	if len(operatorId) == 0 || len(deviceId) == 0 {
+		WriteData(w, config.NewError(config.InvalidParameterValue))
+		return
+	}
 
 	// 验证操作人是否存在
 	operator, err := queryUserBaseInfo(operatorId)
@@ -272,10 +310,23 @@ func GetDeviceInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证需要查询的设备是否存在
-	device, err := queryDeviceInfoByID(deviceId)
+	temp, err := fetchDeviceInfo(deviceId)
 	if err != nil {
 		panic(err)
 	}
+
+	var device model.Device
+	device.DeviceId = temp.DeviceId
+	device.DeviceName = temp.DeviceName
+	device.AgencyId = temp.AgencyId
+	device.Latitude = temp.Latitude
+	device.Longitude = temp.Longitude
+	device.CreateTime = temp.CreateTime
+	device.UpdateTime = temp.UpdateTime
+	if len(temp.AgencyNames) > 0 {
+		device.AgencyName = temp.AgencyNames[0]
+	}
+
 	if !ExistDevice(device) {
 		WriteData(w, config.DeviceHasNotExists)
 		return
@@ -291,7 +342,7 @@ func GetDeviceInfo(w http.ResponseWriter, r *http.Request) {
 
 ////=========== Private Methods ===========
 
-func queryDeviceInfoByID(deviceId string) (model.Device, error) {
+func queryDeviceBaseInfo(deviceId string) (model.Device, error) {
 	var device model.Device
 	objId := bson.ObjectIdHex(deviceId)
 	query := func(c *mgo.Collection) error {
@@ -370,6 +421,31 @@ func fetchPagingDeviceList(operator model.User, page, size int) ([]model.TempDev
 		}
 		return c.Pipe(pipeline).All(&tempDevices)
 	}
-	err := SharedQuery(T_USER, query)
+	err := SharedQuery(T_DEVICE, query)
 	return tempDevices, err
+}
+
+func fetchDeviceInfo(deviceId string) (model.TempDevice, error) {
+	var tempDevice model.TempDevice
+	objId := bson.ObjectIdHex(deviceId)
+	query := func(c *mgo.Collection) error {
+		pipeline := []bson.M{
+			bson.M{"$match": bson.M{"_id": objId}},
+			bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency_docs"}},
+			bson.M{"$project": bson.M{
+				"_id":          1,
+				"device_name":  1,
+				"agency_id":    1,
+				"latitude":     1,
+				"longitude":    1,
+				"status":       1,
+				"create_time":  1,
+				"update_time":  1,
+				"agency_names": "$agency_docs.agency_name",
+			}},
+		}
+		return c.Pipe(pipeline).One(&tempDevice)
+	}
+	err := SharedQuery(T_DEVICE, query)
+	return tempDevice, err
 }

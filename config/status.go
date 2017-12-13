@@ -9,10 +9,10 @@ const (
 
 /** 设备状态 */
 const (
-	DEVICE_STATUS_INVALID = -1 // 无效的设备状态
-	DEVICE_STATUS_UNALLOC = 0  // 未分配
-	DEVICE_STATUS_NORMAL  = 1  // 正常
-	DEVICE_STATUS_UNUSED  = 2  // 不可用
+	DEVICE_STATUS_INVALID     = -1 // 无效的设备状态
+	DEVICE_STATUS_UNALLOC     = 0  // 未分配
+	DEVICE_STATUS_NORMAL      = 1  // 正常
+	DEVICE_STATUS_UNAVAILABLE = 2  // 不可用
 )
 
 /** 组织机构状态 */

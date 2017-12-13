@@ -37,8 +37,7 @@ type TempUser struct {
 	CreateTime    int64           `json:"create_time" bson:"create_time"`         // 创建时间
 	UpdateTime    int64           `json:"update_time" bson:"update_time"`         // 最后更新时间
 	AgencyNames   []string        `json:"agency_names" bson:"agency_names"`       // 组织机构名列表
-	DeviceIds     []bson.ObjectId `json:"device_ids" bson:"device_ids"`           // 设备名ID列表
-	DeviceNames   []string        `json:"device_names" bson:"device_names"`       // 设备名列表
+	UsableDevices []Device        `json:"device_docs" bson:"device_docs"`         // 用户可操作的设备列表
 }
 
 /** 用于添加或修改用户信息请求的结构体 */
