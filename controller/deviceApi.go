@@ -15,11 +15,6 @@ import (
 
 func AddDevice(w http.ResponseWriter, r *http.Request) {
 
-	if strings.Compare(r.Method, "POST") != 0 && strings.Compare(r.Method, "OPTION") != 0 {
-		WriteData(w, config.NewError(config.UnsupportedRequestMethod))
-		return
-	}
-
 	body, _ := ioutil.ReadAll(r.Body)
 	var req model.DeviceReq
 	json.Unmarshal(body, &req)
@@ -73,7 +68,7 @@ func AddDevice(w http.ResponseWriter, r *http.Request) {
 
 func RegisterDevice(w http.ResponseWriter, r *http.Request) {
 
-	if strings.Compare(r.Method, "POST") != 0 && strings.Compare(r.Method, "OPTION") != 0 {
+	if strings.Compare(r.Method, "POST") != 0 {
 		WriteData(w, config.NewError(config.UnsupportedRequestMethod))
 		return
 	}
@@ -115,11 +110,6 @@ func RegisterDevice(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteDevice(w http.ResponseWriter, r *http.Request) {
-
-	if strings.Compare(r.Method, "GET") != 0 && strings.Compare(r.Method, "OPTION") != 0 {
-		WriteData(w, config.NewError(config.UnsupportedRequestMethod))
-		return
-	}
 
 	operatorId := r.URL.Query().Get("operator_id")
 	deviceId := r.URL.Query().Get("device_id")
@@ -166,11 +156,6 @@ func DeleteDevice(w http.ResponseWriter, r *http.Request) {
 }
 
 func EditDevice(w http.ResponseWriter, r *http.Request) {
-
-	if strings.Compare(r.Method, "POST") != 0 && strings.Compare(r.Method, "OPTION") != 0 {
-		WriteData(w, config.NewError(config.UnsupportedRequestMethod))
-		return
-	}
 
 	body, _ := ioutil.ReadAll(r.Body)
 	var req model.DeviceReq
@@ -226,11 +211,6 @@ func EditDevice(w http.ResponseWriter, r *http.Request) {
 
 func FetchDeviceList(w http.ResponseWriter, r *http.Request) {
 
-	if strings.Compare(r.Method, "GET") != 0 && strings.Compare(r.Method, "OPTION") != 0 {
-		WriteData(w, config.NewError(config.UnsupportedRequestMethod))
-		return
-	}
-
 	operatorId := r.URL.Query().Get("operator_id")
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
@@ -277,11 +257,6 @@ func FetchDeviceList(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetDeviceInfo(w http.ResponseWriter, r *http.Request) {
-
-	if strings.Compare(r.Method, "GET") != 0 && strings.Compare(r.Method, "OPTION") != 0 {
-		WriteData(w, config.NewError(config.UnsupportedRequestMethod))
-		return
-	}
 
 	operatorId := r.URL.Query().Get("operator_id")
 	deviceId := r.URL.Query().Get("device_id")

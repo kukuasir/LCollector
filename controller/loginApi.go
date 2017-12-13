@@ -15,11 +15,6 @@ import (
 
 func Login(w http.ResponseWriter, r *http.Request) {
 
-	if strings.Compare(r.Method, "POST") != 0 && strings.Compare(r.Method, "OPTION") != 0 {
-		WriteData(w, config.NewError(config.UnsupportedRequestMethod))
-		return
-	}
-
 	body, _ := ioutil.ReadAll(r.Body)
 	var loginReq model.LoginReq
 	json.Unmarshal(body, &loginReq)
@@ -110,6 +105,7 @@ func newLoginRet(user model.User, paths []model.Path) model.LoginRet {
 	ret.ResultInfo.Status = config.Success
 	ret.ResultInfo.Message = config.TIPS_LOGIN_SUCCEED
 	ret.ResultInfo.Token = generateToken(user.UserId.String())
+	ret.RBACData.OperatorId = user.UserId.String()
 	ret.RBACData.UserName = user.UserName
 	ret.RBACData.Role = user.Role
 	ret.RBACData.Paths = paths

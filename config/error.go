@@ -33,7 +33,7 @@ const (
 	PermissionDeniedUser   = -1041 // 没有用户的操作或查看权限
 	PermissionDeniedAgency = -1042 // 没有机构的操作或查看权限
 
-	Success = 0
+	Success = 200
 )
 
 /** 自定义成功提示 */

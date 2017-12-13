@@ -10,16 +10,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 )
 
 func AddUser(w http.ResponseWriter, r *http.Request) {
-
-	if strings.Compare(r.Method, "POST") != 0 && strings.Compare(r.Method, "OPTION") != 0 {
-		WriteData(w, config.NewError(config.UnsupportedRequestMethod))
-		return
-	}
 
 	body, _ := ioutil.ReadAll(r.Body)
 	var req model.UserReq
@@ -75,11 +69,6 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
 
-	if strings.Compare(r.Method, "GET") != 0 && strings.Compare(r.Method, "OPTION") != 0 {
-		WriteData(w, config.NewError(config.UnsupportedRequestMethod))
-		return
-	}
-
 	operatorId := r.URL.Query().Get("operator_id")
 	userId := r.URL.Query().Get("user_id")
 
@@ -126,11 +115,6 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func EditUser(w http.ResponseWriter, r *http.Request) {
-
-	if strings.Compare(r.Method, "POST") != 0 && strings.Compare(r.Method, "OPTION") != 0 {
-		WriteData(w, config.NewError(config.UnsupportedRequestMethod))
-		return
-	}
 
 	body, _ := ioutil.ReadAll(r.Body)
 	var req model.UserReq
@@ -193,11 +177,6 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 
 func UpdatePwd(w http.ResponseWriter, r *http.Request) {
 
-	if strings.Compare(r.Method, "POST") != 0 && strings.Compare(r.Method, "OPTION") != 0 {
-		WriteData(w, config.NewError(config.UnsupportedRequestMethod))
-		return
-	}
-
 	body, _ := ioutil.ReadAll(r.Body)
 	var req model.UserReq
 	json.Unmarshal(body, &req)
@@ -244,11 +223,6 @@ func UpdatePwd(w http.ResponseWriter, r *http.Request) {
 }
 
 func FetchUserList(w http.ResponseWriter, r *http.Request) {
-
-	if strings.Compare(r.Method, "GET") != 0 && strings.Compare(r.Method, "OPTION") != 0 {
-		WriteData(w, config.NewError(config.UnsupportedRequestMethod))
-		return
-	}
 
 	operatorId := r.URL.Query().Get("operator_id")
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
@@ -309,11 +283,6 @@ func FetchUserList(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetUserInfo(w http.ResponseWriter, r *http.Request) {
-
-	if strings.Compare(r.Method, "GET") != 0 && strings.Compare(r.Method, "OPTION") != 0 {
-		WriteData(w, config.NewError(config.UnsupportedRequestMethod))
-		return
-	}
 
 	operatorId := r.URL.Query().Get("operator_id")
 	userId := r.URL.Query().Get("user_id")

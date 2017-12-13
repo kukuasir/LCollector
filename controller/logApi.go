@@ -7,16 +7,10 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 )
 
 func FetchMessageLogList(w http.ResponseWriter, r *http.Request) {
-
-	if strings.Compare(r.Method, "GET") != 0 && strings.Compare(r.Method, "OPTION") != 0 {
-		WriteData(w, config.NewError(config.UnsupportedRequestMethod))
-		return
-	}
 
 	operatorId := r.URL.Query().Get("operator_id")
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
@@ -47,11 +41,6 @@ func FetchMessageLogList(w http.ResponseWriter, r *http.Request) {
 
 func FetchOperateLogList(w http.ResponseWriter, r *http.Request) {
 
-	if strings.Compare(r.Method, "GET") != 0 && strings.Compare(r.Method, "OPTION") != 0 {
-		WriteData(w, config.NewError(config.UnsupportedRequestMethod))
-		return
-	}
-
 	operatorId := r.URL.Query().Get("operator_id")
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
@@ -80,11 +69,6 @@ func FetchOperateLogList(w http.ResponseWriter, r *http.Request) {
 }
 
 func FetchLoginLogList(w http.ResponseWriter, r *http.Request) {
-
-	if strings.Compare(r.Method, "GET") != 0 && strings.Compare(r.Method, "OPTION") != 0 {
-		WriteData(w, config.NewError(config.UnsupportedRequestMethod))
-		return
-	}
 
 	operatorId := r.URL.Query().Get("operator_id")
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))

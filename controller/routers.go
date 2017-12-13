@@ -46,9 +46,23 @@ var routes = Routes{
 
 	Route{
 		"AddAgency",
+		"OPTIONS",
+		"/agency/add",
+		AddAgency,
+	},
+
+	Route{
+		"AddAgency",
 		"POST",
 		"/agency/add",
 		AddAgency,
+	},
+
+	Route{
+		"DeleteAgency",
+		"OPTIONS",
+		"/agency/delete",
+		DeleteAgency,
 	},
 
 	Route{
@@ -60,9 +74,23 @@ var routes = Routes{
 
 	Route{
 		"EditAgency",
+		"OPTIONS",
+		"/agency/edit",
+		EditAgency,
+	},
+
+	Route{
+		"EditAgency",
 		"POST",
 		"/agency/edit",
 		EditAgency,
+	},
+
+	Route{
+		"FetchAgencyList",
+		"OPTIONS",
+		"/agency/list",
+		FetchAgencyList,
 	},
 
 	Route{
@@ -74,6 +102,13 @@ var routes = Routes{
 
 	Route{
 		"GetAgencyInfo",
+		"OPTIONS",
+		"/agency/view",
+		GetAgencyInfo,
+	},
+
+	Route{
+		"GetAgencyInfo",
 		"GET",
 		"/agency/view",
 		GetAgencyInfo,
@@ -81,9 +116,23 @@ var routes = Routes{
 
 	Route{
 		"GetAppInfo",
+		"OPTIONS",
+		"/getAppInfo",
+		GetAppInfo,
+	},
+
+	Route{
+		"GetAppInfo",
 		"GET",
 		"/getAppInfo",
 		GetAppInfo,
+	},
+
+	Route{
+		"AddDevice",
+		"OPTIONS",
+		"/device/add",
+		AddDevice,
 	},
 
 	Route{
@@ -102,9 +151,23 @@ var routes = Routes{
 
 	Route{
 		"DeleteDevice",
+		"OPTIONS",
+		"/device/delete",
+		DeleteDevice,
+	},
+
+	Route{
+		"DeleteDevice",
 		"GET",
 		"/device/delete",
 		DeleteDevice,
+	},
+
+	Route{
+		"EditDevice",
+		"OPTIONS",
+		"/device/edit",
+		EditDevice,
 	},
 
 	Route{
@@ -116,9 +179,23 @@ var routes = Routes{
 
 	Route{
 		"FetchDeviceList",
+		"OPTIONS",
+		"/device/list",
+		FetchDeviceList,
+	},
+
+	Route{
+		"FetchDeviceList",
 		"GET",
 		"/device/list",
 		FetchDeviceList,
+	},
+
+	Route{
+		"GetDeviceInfo",
+		"OPTIONS",
+		"/device/view",
+		GetDeviceInfo,
 	},
 
 	Route{
@@ -130,9 +207,23 @@ var routes = Routes{
 
 	Route{
 		"FetchMessageLogList",
+		"OPTIONS",
+		"/log/message",
+		FetchMessageLogList,
+	},
+
+	Route{
+		"FetchMessageLogList",
 		"GET",
 		"/log/message",
 		FetchMessageLogList,
+	},
+
+	Route{
+		"FetchOperateLogList",
+		"OPTIONS",
+		"/log/operate",
+		FetchOperateLogList,
 	},
 
 	Route{
@@ -144,9 +235,23 @@ var routes = Routes{
 
 	Route{
 		"FetchLoginLogList",
+		"OPTIONS",
+		"/log/login",
+		FetchLoginLogList,
+	},
+
+	Route{
+		"FetchLoginLogList",
 		"GET",
 		"/log/login",
 		FetchLoginLogList,
+	},
+
+	Route{
+		"Login",
+		"OPTIONS",
+		"/login",
+		Login,
 	},
 
 	Route{
@@ -158,9 +263,23 @@ var routes = Routes{
 
 	Route{
 		"AddUser",
+		"OPTIONS",
+		"/user/add",
+		AddUser,
+	},
+
+	Route{
+		"AddUser",
 		"POST",
 		"/user/add",
 		AddUser,
+	},
+
+	Route{
+		"DeleteUser",
+		"OPTIONS",
+		"/user/delete",
+		DeleteUser,
 	},
 
 	Route{
@@ -172,9 +291,23 @@ var routes = Routes{
 
 	Route{
 		"EditUser",
+		"OPTIONS",
+		"/user/edit",
+		EditUser,
+	},
+
+	Route{
+		"EditUser",
 		"POST",
 		"/user/edit",
 		EditUser,
+	},
+
+	Route{
+		"FetchUserList",
+		"OPTIONS",
+		"/user/list",
+		FetchUserList,
 	},
 
 	Route{
@@ -186,9 +319,23 @@ var routes = Routes{
 
 	Route{
 		"GetUserInfo",
+		"OPTIONS",
+		"/user/view",
+		GetUserInfo,
+	},
+
+	Route{
+		"GetUserInfo",
 		"GET",
 		"/user/view",
 		GetUserInfo,
+	},
+
+	Route{
+		"UpdatePwd",
+		"OPTIONS",
+		"/user/updatePwd",
+		UpdatePwd,
 	},
 
 	Route{

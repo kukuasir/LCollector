@@ -24,10 +24,7 @@ func GenerateToken(uid string) string {
 func SaveToken(uid string, token string) bool {
 
 	var userToken model.UserToken
-	err := queryTokenByUserID(uid, &userToken)
-	if err != nil {
-		return false
-	}
+	_ = queryTokenByUserID(uid, &userToken)
 
 	/** 传入的token跟数据库中查询的结果一致的处理 */
 	if len(userToken.Token) > 0 && strings.Compare(token, userToken.Token) == 0 {
