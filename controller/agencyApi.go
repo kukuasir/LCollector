@@ -8,17 +8,11 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"io/ioutil"
 	"net/http"
-	"strings"
 	"time"
 	"strconv"
 )
 
 func AddAgency(w http.ResponseWriter, r *http.Request) {
-
-	if strings.Compare(r.Method, "POST") != 0 && strings.Compare(r.Method, "OPTION") != 0 {
-		WriteData(w, config.NewError(config.UnsupportedRequestMethod))
-		return
-	}
 
 	body, _ := ioutil.ReadAll(r.Body)
 	var req model.AgencyReq
@@ -74,11 +68,6 @@ func AddAgency(w http.ResponseWriter, r *http.Request) {
 
 func DeleteAgency(w http.ResponseWriter, r *http.Request) {
 
-	if strings.Compare(r.Method, "GET") != 0 && strings.Compare(r.Method, "OPTION") != 0 {
-		WriteData(w, config.NewError(config.UnsupportedRequestMethod))
-		return
-	}
-
 	operatorId := r.URL.Query().Get("operator_id")
 	agencyId := r.URL.Query().Get("agency_id")
 
@@ -131,11 +120,6 @@ func DeleteAgency(w http.ResponseWriter, r *http.Request) {
 }
 
 func EditAgency(w http.ResponseWriter, r *http.Request) {
-
-	if strings.Compare(r.Method, "POST") != 0 && strings.Compare(r.Method, "OPTION") != 0 {
-		WriteData(w, config.NewError(config.UnsupportedRequestMethod))
-		return
-	}
 
 	body, _ := ioutil.ReadAll(r.Body)
 	var req model.AgencyReq
@@ -190,11 +174,6 @@ func EditAgency(w http.ResponseWriter, r *http.Request) {
 
 func FetchAgencyList(w http.ResponseWriter, r *http.Request) {
 
-	if strings.Compare(r.Method, "GET") != 0 && strings.Compare(r.Method, "OPTION") != 0 {
-		WriteData(w, config.NewError(config.UnsupportedRequestMethod))
-		return
-	}
-
 	//operatorId := r.URL.Query().Get("operator_id")
 	//if len(operatorId) == 0 {
 	//	WriteData(w, config.NewError(config.InvalidParameterValue))
@@ -224,11 +203,6 @@ func FetchAgencyList(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetAgencyInfo(w http.ResponseWriter, r *http.Request) {
-
-	if strings.Compare(r.Method, "GET") != 0 && strings.Compare(r.Method, "OPTION") != 0 {
-		WriteData(w, config.NewError(config.UnsupportedRequestMethod))
-		return
-	}
 
 	//operatorId := r.URL.Query().Get("operator_id")
 	agencyId := r.URL.Query().Get("agency_id")
