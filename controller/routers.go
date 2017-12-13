@@ -101,6 +101,20 @@ var routes = Routes{
 	},
 
 	Route{
+		"FetchAgencyDevices",
+		"OPTIONS",
+		"/agency/devices",
+		FetchAgencyDevices,
+	},
+
+	Route{
+		"FetchAgencyDevices",
+		"GET",
+		"/agency/devices",
+		FetchAgencyDevices,
+	},
+
+	Route{
 		"GetAgencyInfo",
 		"OPTIONS",
 		"/agency/view",

@@ -17,6 +17,7 @@ type User struct {
 	Role          string        `json:"role"`                                      // 角色
 	Priority      string        `json:"priority,omitempty"`                        // 设备查看方式的优先级
 	Status        int64         `json:"status"`                                    // 状态
+	StatusDesc    string        `json:"status_desc"`                               // 状态描述
 	LastLoginTime int64         `json:"last_login_time" bson:"last_login_time"`    // 最后一次登录时间
 	LastLoginIP   string        `json:"last_login_ip" bson:"last_login_ip"`        // 最后一次登录的IP
 	CreateTime    int64         `json:"create_time" bson:"create_time"`            // 创建时间

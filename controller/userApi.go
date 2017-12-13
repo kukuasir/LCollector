@@ -30,16 +30,9 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	if !ExistUser(operator) {
-		WriteData(w, config.OperaterHasNotExists)
-		return
-	}
 
 	// 验证被添加用户是否存在
 	user, err := queryUserByUname(req.UserName)
-	if err != nil {
-		panic(err)
-	}
 	if ExistUser(user) {
 		WriteData(w, config.UserHasAlreadyExists)
 		return
@@ -77,19 +70,11 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	if !ExistUser(operator) {
-		WriteData(w, config.OperaterHasNotExists)
-		return
-	}
 
 	// 验证需要删除的用户是否存在
 	user, err := queryUserBaseInfo(userId)
 	if err != nil {
 		panic(err)
-	}
-	if !ExistUser(user) {
-		WriteData(w, config.UserHasNotExists)
-		return
 	}
 
 	// 验证操作人是否有权限删除对象
@@ -131,19 +116,11 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	if !ExistUser(operator) {
-		WriteData(w, config.OperaterHasNotExists)
-		return
-	}
 
 	// 验证需要修改的用户是否存在
 	user, err := queryUserBaseInfo(req.UserId)
 	if err != nil {
 		panic(err)
-	}
-	if !ExistUser(user) {
-		WriteData(w, config.UserHasNotExists)
-		return
 	}
 
 	// 验证操作人是否有权限修改对象
@@ -192,19 +169,11 @@ func UpdatePwd(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	if !ExistUser(operator) {
-		WriteData(w, config.OperaterHasNotExists)
-		return
-	}
 
 	// 验证用户是否存在
 	user, err := queryUserBaseInfo(req.UserId)
 	if err != nil {
 		panic(err)
-	}
-	if !ExistUser(user) {
-		WriteData(w, config.UserHasNotExists)
-		return
 	}
 
 	err = updatePwd(req)
@@ -225,11 +194,6 @@ func UpdatePwd(w http.ResponseWriter, r *http.Request) {
 func FetchUserList(w http.ResponseWriter, r *http.Request) {
 
 	operatorId := r.URL.Query().Get("operator_id")
-	if len(operatorId) == 0 {
-		WriteData(w, config.NewError(config.InvalidParameterValue))
-		return
-	}
-
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
 	if size == 0 {
@@ -240,10 +204,6 @@ func FetchUserList(w http.ResponseWriter, r *http.Request) {
 	operator, err := queryUserBaseInfo(operatorId)
 	if err != nil {
 		panic(err)
-	}
-	if !ExistUser(operator) {
-		WriteData(w, config.OperaterHasNotExists)
-		return
 	}
 
 	tempUsers, err := fetchPagingUserList(operator, page, size)
@@ -273,7 +233,7 @@ func FetchUserList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var totalCount int64
-	if page == 1 {
+	if page == 0 {
 		totalCount, err = GetCount(T_USER)
 	}
 
@@ -291,19 +251,10 @@ func GetUserInfo(w http.ResponseWriter, r *http.Request) {
 	operatorId := r.URL.Query().Get("operator_id")
 	userId := r.URL.Query().Get("user_id")
 
-	if len(operatorId) == 0 || len(userId) == 0 {
-		WriteData(w, config.NewError(config.InvalidParameterValue))
-		return
-	}
-
 	// 验证操作人是否存在
-	operator, err := queryUserBaseInfo(operatorId)
+	_, err := queryUserBaseInfo(operatorId)
 	if err != nil {
 		panic(err)
-	}
-	if !ExistUser(operator) {
-		WriteData(w, config.OperaterHasNotExists)
-		return
 	}
 
 	// 验证需要查询的用户是否存在
@@ -319,6 +270,7 @@ func GetUserInfo(w http.ResponseWriter, r *http.Request) {
 	user.AgencyId = temp.AgencyId
 	user.Role = temp.Role
 	user.Status = temp.Status
+	user.StatusDesc = config.UserStatusDesc(temp.Status)
 	user.LastLoginTime = temp.LastLoginTime
 	user.LastLoginIP = temp.LastLoginIP
 	user.CreateTime = temp.CreateTime
@@ -350,9 +302,12 @@ func GetUserInfo(w http.ResponseWriter, r *http.Request) {
 // 根据用户ID获取用户信息
 func queryUserBaseInfo(userId string) (model.User, error) {
 	var user model.User
-	objId := bson.ObjectIdHex(userId)
 	query := func(c *mgo.Collection) error {
-		return c.FindId(objId).One(&user)
+		selector := bson.M{
+			"_id": bson.ObjectIdHex(userId),
+			"status": bson.M{"$gt": config.USER_STATUS_INVALID},
+		}
+		return c.Find(selector).One(&user)
 	}
 	err := SharedQuery(T_USER, query)
 	return user, err
@@ -433,13 +388,14 @@ func UpsertDeviceIsBy(userId string, deviceIds []string) error {
 // 分页查询用户列表
 func fetchPagingUserList(operator model.User, page, size int) ([]model.TempUser, error) {
 
+	var tempUsers []model.TempUser
+
 	if operator.Role == "customer" {
-		return nil, nil
+		return tempUsers, nil
 	}
 
 	ValidPageValue(&page)
 
-	var tempUsers []model.TempUser
 	query := func(c *mgo.Collection) error {
 		pipeline := []bson.M{
 			bson.M{"$skip": page * size},

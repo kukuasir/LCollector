@@ -29,9 +29,10 @@ const (
 	AgencyHasNotExists     = -1031 // 不存在的组织机构
 	AgencyHadBeenLocked    = -1032 // 组织机构已被锁定
 
-	PermissionDeniedDevice = -1040 // 没有设备的操作或查看权限
-	PermissionDeniedUser   = -1041 // 没有用户的操作或查看权限
-	PermissionDeniedAgency = -1042 // 没有机构的操作或查看权限
+	PermissionDeniedDevice  = -1040 // 没有设备的操作或查看权限
+	PermissionDeniedUser    = -1041 // 没有用户的操作或查看权限
+	PermissionDeniedAgency  = -1042 // 没有机构的操作或查看权限
+	PermissionDeniedMessage = -1043 // 没有消息的操作或查看权限
 
 	Success = 200
 )

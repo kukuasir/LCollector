@@ -10,6 +10,7 @@ type Agency struct {
 	ContactNumber string        `json:"contact_number" bson:"contact_number"` // 联系电话
 	ContactAddr   string        `json:"contact_addr" bson:"contact_addr"`     // 联系地址
 	Status        int64         `json:"status"`                               // 状态
+	StatusDesc    string        `json:"status_desc"`                          // 状态描述
 	CreateTime    int64         `json:"create_time" bson:"create_time"`       // 创建时间
 	UpdateTime    int64         `json:"update_time" bson:"update_time"`       // 最后更新时间
 }

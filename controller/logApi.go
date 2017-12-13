@@ -15,26 +15,35 @@ func FetchMessageLogList(w http.ResponseWriter, r *http.Request) {
 	operatorId := r.URL.Query().Get("operator_id")
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
+	if size == 0 {
+		size = 20  // 默认一页加载20条数据
+	}
 
 	// 验证操作人是否存在
 	operator, err := queryUserBaseInfo(operatorId)
 	if err != nil {
 		panic(err)
 	}
-	if !ExistUser(operator) {
-		WriteData(w, config.OperaterHasNotExists)
+
+	// 只有超级管理员才有权限查看消息日志
+	if operator.Role != "root" {
+		WriteData(w, config.NewError(config.PermissionDeniedAgency))
 		return
 	}
 
 	logList, err := fetchPagingMessageLogs(operator, page, size)
-	if err != nil {
-		panic(err)
+
+	// 计算数据总条数
+	var totalCount int64
+	if page == 0 {
+		totalCount, err = GetCount(T_MESSAGE_LOG)
 	}
 
 	// 返回查询结果
 	var logListRet model.MessageLogRet
 	logListRet.ResultInfo.Status = config.Success
 	logListRet.ResultInfo.Message = config.TIPS_QUERY_SUCCEED
+	logListRet.ResultInfo.Total = totalCount
 	logListRet.MessageList = logList
 	WriteData(w, logListRet)
 }
@@ -44,27 +53,51 @@ func FetchOperateLogList(w http.ResponseWriter, r *http.Request) {
 	operatorId := r.URL.Query().Get("operator_id")
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
+	if size == 0 {
+		size = 20  // 默认一页加载20条数据
+	}
 
 	// 验证操作人是否存在
 	operator, err := queryUserBaseInfo(operatorId)
 	if err != nil {
 		panic(err)
 	}
-	if !ExistUser(operator) {
-		WriteData(w, config.OperaterHasNotExists)
-		return
-	}
 
-	logList, err := fetchPagingOperateLogs(operator, page, size)
+	tempLogs, err := fetchPagingOperateLogs(operator, page, size)
 	if err != nil {
 		panic(err)
+	}
+
+	// 转换到操作日志表中
+	var operateLogs []model.OperateLog
+	for i := 0; i < len(tempLogs); i++ {
+		temp := tempLogs[i]
+		var log model.OperateLog
+		log.Type = temp.Type
+		log.Target = temp.Target
+		log.TargetObject = temp.TargetObject
+		log.OperatorId = temp.OperatorId
+		log.CreateTime = temp.CreateTime
+		log.SourceIP = temp.SourceIP
+		log.AgencyId = temp.AgencyId
+		if len(temp.AgencyNames) > 0 {
+			log.AgencyName = temp.AgencyNames[0]
+		}
+		operateLogs = append(operateLogs, log)
+	}
+
+	// 计算数据总条数
+	var totalCount int64
+	if page == 0 {
+		totalCount, err = GetCount(T_OPERATE_LOG)
 	}
 
 	// 返回查询结果
 	var logListRet model.OperateLogRet
 	logListRet.ResultInfo.Status = config.Success
 	logListRet.ResultInfo.Message = config.TIPS_QUERY_SUCCEED
-	logListRet.OperateList = logList
+	logListRet.ResultInfo.Total = totalCount
+	logListRet.OperateList = operateLogs
 	WriteData(w, logListRet)
 }
 
@@ -73,27 +106,49 @@ func FetchLoginLogList(w http.ResponseWriter, r *http.Request) {
 	operatorId := r.URL.Query().Get("operator_id")
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
+	if size == 0 {
+		size = 20  // 默认一页加载20条数据
+	}
 
 	// 验证操作人是否存在
 	operator, err := queryUserBaseInfo(operatorId)
 	if err != nil {
 		panic(err)
 	}
-	if !ExistUser(operator) {
-		WriteData(w, config.OperaterHasNotExists)
-		return
-	}
 
-	logList, err := fetchPagingLoginLogs(operator, page, size)
+	tempLogs, err := fetchPagingLoginLogs(operator, page, size)
 	if err != nil {
 		panic(err)
+	}
+
+	// 转换到登录日志表中
+	var loginLogs []model.LoginLog
+	for i := 0; i < len(tempLogs); i++ {
+		temp := tempLogs[i]
+		var log model.LoginLog
+		log.UserId = temp.UserId
+		log.StatusDesc = config.UserStatusDesc(temp.Status)
+		log.AgencyId = temp.AgencyId
+		log.CreateTime = temp.CreateTime
+		log.SourceIP = temp.SourceIP
+		if len(temp.AgencyNames) > 0 {
+			log.AgencyName = temp.AgencyNames[0]
+		}
+		loginLogs = append(loginLogs, log)
+	}
+
+	// 计算数据总条数
+	var totalCount int64
+	if page == 0 {
+		totalCount, err = GetCount(T_LOGIN_LOG)
 	}
 
 	// 返回查询结果
 	var logListRet model.LoginLogRet
 	logListRet.ResultInfo.Status = config.Success
 	logListRet.ResultInfo.Message = config.TIPS_QUERY_SUCCEED
-	logListRet.LoginList = logList
+	logListRet.ResultInfo.Total = totalCount
+	logListRet.LoginList = loginLogs
 	WriteData(w, logListRet)
 }
 
@@ -142,6 +197,7 @@ func InsertMessageLog(msgType int64, deviceId string, content string, ipaddr str
 	query := func(c *mgo.Collection) error {
 		selector := bson.M{
 			"type":        msgType,
+			"type_desc":   msgTypeDesc(msgType),
 			"device_id":   deviceId,
 			"content":     content,
 			"create_time": time.Now().Unix(),
@@ -158,107 +214,106 @@ func InsertMessageLog(msgType int64, deviceId string, content string, ipaddr str
 
 ////=========== Private Methods ===========
 
-func fetchPagingLoginLogs(operator model.User, page, size int) ([]model.LoginLog, error) {
+func fetchPagingLoginLogs(operator model.User, page, size int) ([]model.TempLoginLog, error) {
 
-	var loglist []model.LoginLog
+	var tempLogs []model.TempLoginLog
 
 	if operator.Role == "customer" {
-		return nil, nil
+		return tempLogs, nil
 	}
 
-	resp := bson.M{}
+	ValidPageValue(&page)
+
 	query := func(c *mgo.Collection) error {
-		var pipeline []bson.M
-		if operator.Role == "root" {
-			pipeline = []bson.M{
-				bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency"}},
-				bson.M{"$unwind": "$agency"},
-				bson.M{"$sort": bson.M{"time": -1}},
-				bson.M{"$skip": page * size},
-				bson.M{"$limit": size},
-			}
-		} else if operator.Role == "admin" {
-			pipeline = []bson.M{
-				bson.M{"agency_id": operator.AgencyId},
-				bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency"}},
-				bson.M{"$unwind": "$agency"},
-				bson.M{"$sort": bson.M{"time": -1}},
-				bson.M{"$skip": page * size},
-				bson.M{"$limit": size},
-			}
+		pipeline := []bson.M{
+			bson.M{"$skip": page * size},
+			bson.M{"$limit": size},
+			bson.M{"$sort": bson.M{"create_time": -1}},
+			bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency_docs"}},
+			bson.M{"$project": bson.M{
+				"user_id":      1,
+				"status":       1,
+				"agency_id":    1,
+				"create_time":  1,
+				"source_ip":    1,
+				"agency_names": "$agency_docs.agency_name",
+			}},
 		}
-		return c.Pipe(pipeline).All(&resp)
+		if operator.Role == "admin" {
+			pipeline = append(pipeline, bson.M{"$match": bson.M{"agency_id": operator.AgencyId}})
+		}
+		return c.Pipe(pipeline).All(&tempLogs)
 	}
 	err := SharedQuery(T_LOGIN_LOG, query)
-	return loglist, err
+	return tempLogs, err
 }
 
-func fetchPagingOperateLogs(operator model.User, page, size int) ([]model.OperateLog, error) {
+func fetchPagingOperateLogs(operator model.User, page, size int) ([]model.TempOperateLog, error) {
 
-	var loglist []model.OperateLog
+	var tempLogs []model.TempOperateLog
 
 	if operator.Role == "customer" {
-		return nil, nil
+		return tempLogs, nil
 	}
 
-	resp := bson.M{}
+	ValidPageValue(&page)
+
 	query := func(c *mgo.Collection) error {
-		var pipeline []bson.M
-		if operator.Role == "root" {
-			pipeline = []bson.M{
-				bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency"}},
-				bson.M{"unwind": "$agency"},
-				bson.M{"$sort": bson.M{"time": -1}},
-				bson.M{"$skip": page * size},
-				bson.M{"$limit": size},
-			}
-		} else if operator.Role == "admin" {
-			pipeline = []bson.M{
-				bson.M{"agency_id": operator.AgencyId},
-				bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency"}},
-				bson.M{"unwind": "$agency"},
-				bson.M{"$sort": bson.M{"time": -1}},
-				bson.M{"$skip": page * size},
-				bson.M{"$limit": size},
-			}
+		pipeline := []bson.M{
+			bson.M{"$skip": page * size},
+			bson.M{"$limit": size},
+			bson.M{"$sort": bson.M{"create_time": -1}},
+			bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency_docs"}},
+			bson.M{"$project": bson.M{
+				"type":         1,
+				"target":       1,
+				"object":       1,
+				"operator_id":  1,
+				"agency_id":    1,
+				"create_time":  1,
+				"source_ip":    1,
+				"agency_names": "$agency_docs.agency_name",
+			}},
 		}
-		return c.Pipe(pipeline).All(&resp)
+		if operator.Role == "admin" {
+			pipeline = append(pipeline, bson.M{"$match": bson.M{"agency_id": operator.AgencyId}})
+		}
+		return c.Pipe(pipeline).All(&tempLogs)
 	}
 	err := SharedQuery(T_OPERATE_LOG, query)
-	return loglist, err
+	return tempLogs, err
 }
 
 func fetchPagingMessageLogs(operator model.User, page, size int) ([]model.MessageLog, error) {
 
 	var loglist []model.MessageLog
 
-	if operator.Role == "customer" {
-		return nil, nil
+	if operator.Role != "root" {
+		return loglist, nil
 	}
 
-	resp := bson.M{}
+	ValidPageValue(&page)
+
 	query := func(c *mgo.Collection) error {
-		var pipeline []bson.M
-		if operator.Role == "root" {
-			pipeline = []bson.M{
-				bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency"}},
-				bson.M{"unwind": "$agency"},
-				bson.M{"$sort": bson.M{"time": -1}},
-				bson.M{"$skip": page * size},
-				bson.M{"$limit": size},
-			}
-		} else if operator.Role == "admin" {
-			pipeline = []bson.M{
-				bson.M{"agency_id": operator.AgencyId},
-				bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency"}},
-				bson.M{"unwind": "$agency"},
-				bson.M{"$sort": bson.M{"time": -1}},
-				bson.M{"$skip": page * size},
-				bson.M{"$limit": size},
-			}
-		}
-		return c.Pipe(pipeline).All(&resp)
+		return c.Find(nil).Skip(page * size).Limit(size).Sort("-create_time").All(&loglist)
 	}
 	err := SharedQuery(T_MESSAGE_LOG, query)
 	return loglist, err
+}
+
+func msgTypeDesc(msgtype int64) string {
+	if msgtype == model.MESSAGE_TYPE_HEARTBEAT {
+		return "HEARTBEAT"
+	} else if msgtype == model.MESSAGE_TYPE_STATUS {
+		return "STATUS"
+	} else if msgtype == model.MESSAGE_TYPE_CONFIG {
+		return "CONFIG"
+	} else if msgtype == model.MESSAGE_TYPE_DATA {
+		return "DATA"
+	} else if msgtype == model.MESSAGE_TYPE_WARNING {
+		return "WARNING"
+	} else if msgtype == model.MESSAGE_TYPE_REQUEST {
+		return "REQUEST"
+	}
+	return "NONE"
 }

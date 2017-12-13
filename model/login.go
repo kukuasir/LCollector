@@ -11,10 +11,10 @@ type LoginRet struct {
 }
 
 type RBAC struct {
-	OperatorId string `json:"operator_id"` // 用户id
-	UserName   string `json:"user_name"`   // 用户名
-	Role       string `json:"role"`        // 角色
-	Paths      []Path `json:"paths"`       // 路径
+	UserId   string `json:"user_id"`   // 用户id
+	UserName string `json:"user_name"` // 用户名
+	Role     string `json:"role"`      // 角色
+	Paths    []Path `json:"paths"`     // 路径
 }
 
 type Path struct {

@@ -58,21 +58,43 @@ const (
 )
 
 type LoginLog struct {
-	UserId     bson.ObjectId `json:"user_id" bson:"user_id"`         // 用户ID
-	Status     int64         `json:"status"`                         // 用户状态
-	AgencyId   bson.ObjectId `json:"agency_id" bson:"agency_id"`     // 用户所属机构ID
-	CreateTime int64         `json:"create_time" bson:"create_time"` // 创建时间
-	SourceIP   string        `json:"srouce_ip" bson:"srouce_ip"`     // 来源IP
+	UserId     bson.ObjectId `json:"user_id" bson:"user_id"`                    // 用户ID
+	StatusDesc string        `json:"status_desc"`                               // 用户状态
+	AgencyId   bson.ObjectId `json:"agency_id" bson:"agency_id"`                // 用户所属机构ID
+	AgencyName string        `json:"agency_name,omitempty", bson:"agency_name"` // 所属组织机构名称
+	CreateTime int64         `json:"create_time" bson:"create_time"`            // 创建时间
+	SourceIP   string        `json:"source_ip" bson:"source_ip"`                // 来源IP
+}
+
+type TempLoginLog struct {
+	UserId      bson.ObjectId `json:"user_id" bson:"user_id"`           // 用户ID
+	Status      int64         `json:"status"`                           // 用户状态
+	AgencyId    bson.ObjectId `json:"agency_id" bson:"agency_id"`       // 所属组织机构ID
+	CreateTime  int64         `json:"create_time" bson:"create_time"`   // 创建时间
+	SourceIP    string        `json:"source_ip" bson:"source_ip"`       // 来源IP
+	AgencyNames []string      `json:"agency_names" bson:"agency_names"` // 组织机构名列表
 }
 
 type OperateLog struct {
-	Type         int64         `json:"type"`                           // 操作类型
-	Target       int64         `json:"target"`                         // 操作对象
-	OperatorId   bson.ObjectId `json:"operator_id" bson:"operator_id"` // 操作人ID
-	AgencyId     bson.ObjectId `json:"agency_id" bson:"agency_id"`     // 用户所属机构ID
-	TargetObject string        `json:"object", bson:"object"`          // 操作对象的ID或名称
-	CreateTime   int64         `json:"create_time" bson:"create_time"` // 创建时间
-	SourceIP     string        `json:"srouce_ip" bson:"srouce_ip"`     // 来源IP
+	Type         int64         `json:"type"`                                      // 操作类型(1:添加 2:删除 3:修改)
+	Target       int64         `json:"target"`                                    // 操作对象(1:用户 2:组织机构 3:设备 4:密码)
+	OperatorId   bson.ObjectId `json:"operator_id" bson:"operator_id"`            // 操作人ID
+	AgencyId     bson.ObjectId `json:"agency_id" bson:"agency_id"`                // 用户所属机构ID
+	AgencyName   string        `json:"agency_name,omitempty", bson:"agency_name"` // 所属组织机构名称
+	TargetObject string        `json:"object", bson:"object"`                     // 操作对象的ID或名称
+	CreateTime   int64         `json:"create_time" bson:"create_time"`            // 创建时间
+	SourceIP     string        `json:"source_ip" bson:"source_ip"`                // 来源IP
+}
+
+type TempOperateLog struct {
+	Type         int64         `json:"type"`                             // 操作类型
+	Target       int64         `json:"target"`                           // 操作对象
+	TargetObject string        `json:"object", bson:"object"`            // 操作对象的ID或名称
+	OperatorId   bson.ObjectId `json:"operator_id" bson:"operator_id"`   // 操作人ID
+	AgencyId     bson.ObjectId `json:"agency_id" bson:"agency_id"`       // 用户所属机构ID
+	CreateTime   int64         `json:"create_time" bson:"create_time"`   // 创建时间
+	SourceIP     string        `json:"source_ip" bson:"source_ip"`       // 来源IP
+	AgencyNames  []string      `json:"agency_names" bson:"agency_names"` // 组织机构名列表
 }
 
 type MessageLog struct {
@@ -80,7 +102,7 @@ type MessageLog struct {
 	DeviceId   bson.ObjectId `json:"device_id" bson:"device_id"`     // 发送或接收消息的设备编号
 	Content    string        `json:"content"`                        // 发送或接收的消息内容
 	CreateTime int64         `json:"create_time" bson:"create_time"` // 创建时间
-	SourceIP   string        `json:"srouce_ip" bson:"srouce_ip"`     // 来源IP
+	SourceIP   string        `json:"source_ip" bson:"source_ip"`     // 来源IP
 }
 
 type LoginLogRet struct {

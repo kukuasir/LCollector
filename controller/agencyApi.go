@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"time"
 	"strconv"
+	"os/user"
 )
 
 func AddAgency(w http.ResponseWriter, r *http.Request) {
@@ -30,10 +31,6 @@ func AddAgency(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	if !ExistUser(operator) {
-		WriteData(w, config.OperaterHasNotExists)
-		return
-	}
 
 	// 只有超级管理员才有权限操作组织机构
 	if operator.Role != "root" {
@@ -43,9 +40,6 @@ func AddAgency(w http.ResponseWriter, r *http.Request) {
 
 	// 验证被添加的组织机构是否存在
 	agency, err := queryAgencyInfoByName(req.AgencyName)
-	if err != nil {
-		panic(err)
-	}
 	if ExistAgency(agency) {
 		WriteData(w, config.AgencyHasAlreadyExists)
 		return
@@ -76,10 +70,6 @@ func DeleteAgency(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	if !ExistUser(operator) {
-		WriteData(w, config.OperaterHasNotExists)
-		return
-	}
 
 	// 只有超级管理员才有权限操作组织机构
 	if operator.Role != "root" {
@@ -91,10 +81,6 @@ func DeleteAgency(w http.ResponseWriter, r *http.Request) {
 	agency, err := queryAgencyInfoByID(agencyId)
 	if err != nil {
 		panic(err)
-	}
-	if !ExistAgency(agency) {
-		WriteData(w, config.AgencyHasNotExists)
-		return
 	}
 
 	// 删除该组织机构
@@ -136,10 +122,6 @@ func EditAgency(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	if !ExistUser(operator) {
-		WriteData(w, config.OperaterHasNotExists)
-		return
-	}
 
 	// 只有超级管理员才有权限操作组织机构
 	if operator.Role != "root" {
@@ -148,13 +130,9 @@ func EditAgency(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证需要修改的机构是否存在
-	agency, err := queryAgencyInfoByID(req.AgencyId)
+	_, err = queryAgencyInfoByID(req.AgencyId)
 	if err != nil {
 		panic(err)
-	}
-	if !ExistAgency(agency) {
-		WriteData(w, config.AgencyHasNotExists)
-		return
 	}
 
 	err = updateAgencyInfo(req)
@@ -174,22 +152,23 @@ func EditAgency(w http.ResponseWriter, r *http.Request) {
 
 func FetchAgencyList(w http.ResponseWriter, r *http.Request) {
 
-	//operatorId := r.URL.Query().Get("operator_id")
-	//if len(operatorId) == 0 {
-	//	WriteData(w, config.NewError(config.InvalidParameterValue))
-	//	return
-	//}
-
+	operatorId := r.URL.Query().Get("operator_id")
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
 	if size == 0 {
 		size = 20
 	}
 
+	// 验证操作人是否存在
+	_, err := queryUserBaseInfo(operatorId)
+	if err != nil {
+		panic(err)
+	}
+
 	agencyList, _ := fetchPagingAgencyList(page, size)
 
 	var totalCount int64
-	if page == 1 {
+	if page == 0 {
 		totalCount, _ = GetCount(T_AGENCY)
 	}
 
@@ -204,20 +183,22 @@ func FetchAgencyList(w http.ResponseWriter, r *http.Request) {
 
 func GetAgencyInfo(w http.ResponseWriter, r *http.Request) {
 
-	//operatorId := r.URL.Query().Get("operator_id")
+	operatorId := r.URL.Query().Get("operator_id")
 	agencyId := r.URL.Query().Get("agency_id")
 
-	if len(agencyId) == 0 {
-		WriteData(w, config.NewError(config.InvalidParameterValue))
-		return
+	// 验证操作人是否存在
+	_, err := queryUserBaseInfo(operatorId)
+	if err != nil {
+		panic(err)
 	}
 
 	// 验证需要查询的用户是否存在
-	agency, _ := queryAgencyInfoByID(agencyId)
-	if !ExistAgency(agency) {
-		WriteData(w, config.NewError(config.AgencyHasNotExists))
-		return
+	agency, err := queryAgencyInfoByID(agencyId)
+	if err != nil {
+		panic(err)
 	}
+
+	agency.StatusDesc = config.AgencyStatusDesc(agency.Status)
 
 	// 返回查询结果
 	var agencyRet model.AgencyRet
@@ -226,6 +207,24 @@ func GetAgencyInfo(w http.ResponseWriter, r *http.Request) {
 	agencyRet.AgencyData = agency
 	WriteData(w, agencyRet)
 }
+
+func FetchAgencyDevices(w http.ResponseWriter, r *http.Request) {
+
+	agencyId := r.URL.Query().Get("agency_id")
+	if len(agencyId) == 0 {
+		panic("parameters error")
+	}
+
+	deviceList, _ := fetchDeviceListInAgency(agencyId)
+
+	// 返回查询结果
+	var deviceListRet model.DeviceListRet
+	deviceListRet.ResultInfo.Status = config.Success
+	deviceListRet.ResultInfo.Message = config.TIPS_QUERY_SUCCEED
+	deviceListRet.DeviceList = deviceList
+	WriteData(w, deviceListRet)
+}
+
 
 ////=========== Private Methods ===========
 
@@ -244,7 +243,11 @@ func queryAgencyInfoByName(agencyName string) (model.Agency, error) {
 func queryAgencyInfoByID(agencyId string) (model.Agency, error) {
 	var agency model.Agency
 	query := func(c *mgo.Collection) error {
-		return c.FindId(agencyId).One(&agency)
+		selector := bson.M{
+			"_id": bson.ObjectIdHex(agencyId),
+			"status": bson.M{"$gt": config.AGENCY_STATUS_INVALID},
+		}
+		return c.Find(selector).One(&agency)
 	}
 	err := SharedQuery(T_AGENCY, query)
 	return agency, err
@@ -318,4 +321,13 @@ func fetchPagingAgencyList(page, size int) ([]model.Agency, error) {
 	}
 	err := SharedQuery(T_AGENCY, query)
 	return agencyList, err
+}
+
+func fetchDeviceListInAgency(agencyId string) ([]model.Device, error) {
+	var devlist []model.Device
+	query := func(c *mgo.Collection) error {
+		return c.Find(bson.M{"agency_id": bson.ObjectIdHex(agencyId)}).All(&devlist)
+	}
+	err := SharedQuery(T_DEVICE, query)
+	return devlist, err
 }

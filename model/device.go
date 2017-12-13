@@ -11,6 +11,7 @@ type Device struct {
 	Latitude   float64       `json:"latitude"`                                  // 维度
 	Longitude  float64       `json:"longitude"`                                 // 经度
 	Status     int64         `json:"status"`                                    // 状态(-1:未分配  0:正常  1:报废)
+	StatusDesc string        `json:"status_desc"`                               // 状态描述
 	CreateTime int64         `json:"create_time" bson:"create_time"`            // 创建时间
 	UpdateTime int64         `json:"update_time" bson:"update_time"`            // 最后更新时间
 }

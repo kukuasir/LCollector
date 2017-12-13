@@ -105,7 +105,7 @@ func newLoginRet(user model.User, paths []model.Path) model.LoginRet {
 	ret.ResultInfo.Status = config.Success
 	ret.ResultInfo.Message = config.TIPS_LOGIN_SUCCEED
 	ret.ResultInfo.Token = generateToken(user.UserId.Hex())
-	ret.RBACData.OperatorId = user.UserId.Hex()
+	ret.RBACData.UserId = user.UserId.Hex()
 	ret.RBACData.UserName = user.UserName
 	ret.RBACData.Role = user.Role
 	ret.RBACData.Paths = paths

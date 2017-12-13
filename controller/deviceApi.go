@@ -30,10 +30,6 @@ func AddDevice(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	if !ExistUser(operator) {
-		WriteData(w, config.OperaterHasNotExists)
-		return
-	}
 
 	// 只有超级管理员才有权限添加设备
 	if operator.Role != "root" {
@@ -42,13 +38,9 @@ func AddDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证需要添加的设备是否存在，存在则不能重复添加
-	device, err := queryDeviceBaseInfo(req.DeviceId)
+	_, err = queryDeviceBaseInfo(req.DeviceId)
 	if err != nil {
 		panic(err)
-	}
-	if ExistDevice(device) {
-		WriteData(w, config.DeviceHasAlreadyExists)
-		return
 	}
 
 	err = addDeviceInfo(req)
@@ -77,18 +69,8 @@ func RegisterDevice(w http.ResponseWriter, r *http.Request) {
 	var req model.DeviceReq
 	json.Unmarshal(body, &req)
 
-	// 校验请求参数
-	if len(req.DeviceId) == 0 {
-		WriteData(w, config.InvalidParameterValue)
-		return
-	}
-
 	// 验证需要添加的设备是否存在，存在则不能重复添加
 	device, err := queryDeviceBaseInfo(req.DeviceId)
-	if err != nil {
-		panic(err)
-	}
-
 	if !ExistDevice(device) {
 		err = addDeviceInfo(req)
 	} else {
@@ -119,10 +101,6 @@ func DeleteDevice(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	if !ExistUser(operator) {
-		WriteData(w, config.OperaterHasNotExists)
-		return
-	}
 
 	// 只有超级管理员才有权限删除设备
 	if operator.Role != "root" {
@@ -134,10 +112,6 @@ func DeleteDevice(w http.ResponseWriter, r *http.Request) {
 	device, err := queryDeviceBaseInfo(deviceId)
 	if err != nil {
 		panic(err)
-	}
-	if !ExistDevice(device) {
-		WriteData(w, config.DeviceHasNotExists)
-		return
 	}
 
 	err = deleteDeviceByID(device.DeviceId)
@@ -161,30 +135,16 @@ func EditDevice(w http.ResponseWriter, r *http.Request) {
 	var req model.DeviceReq
 	json.Unmarshal(body, &req)
 
-	// 校验请求参数
-	if len(req.DeviceName) == 0 || len(req.AgencyId) == 0 {
-		WriteData(w, config.InvalidParameterValue)
-		return
-	}
-
 	// 验证操作人是否存在
 	operator, err := queryUserBaseInfo(req.OperatorId)
 	if err != nil {
 		panic(err)
-	}
-	if !ExistUser(operator) {
-		WriteData(w, config.OperaterHasNotExists)
-		return
 	}
 
 	// 验证需要修改的设备是否存在
 	device, err := queryDeviceBaseInfo(req.DeviceId)
 	if err != nil {
 		panic(err)
-	}
-	if !ExistDevice(device) {
-		WriteData(w, config.DeviceHasNotExists)
-		return
 	}
 
 	// 验证操作人是否有权限修改对象
@@ -212,11 +172,6 @@ func EditDevice(w http.ResponseWriter, r *http.Request) {
 func FetchDeviceList(w http.ResponseWriter, r *http.Request) {
 
 	operatorId := r.URL.Query().Get("operator_id")
-	if len(operatorId) == 0 {
-		WriteData(w, config.NewError(config.InvalidParameterValue))
-		return
-	}
-
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
 	if size == 0 {
@@ -228,18 +183,11 @@ func FetchDeviceList(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	if !ExistUser(operator) {
-		WriteData(w, config.OperaterHasNotExists)
-		return
-	}
 
 	var deviceList []model.Device
 
 	if operator.Role == "customer" {
-		usedDevices, err := fetchDeviceListInUsed(operator.UserId)
-		if err != nil {
-			panic(err)
-		}
+		usedDevices, _ := fetchDeviceListInUsed(operator.UserId)
 		// 转换到Device表中
 		for i := 0; i < len(usedDevices); i++ {
 			temp := usedDevices[i].UsableDevices[0]
@@ -253,10 +201,7 @@ func FetchDeviceList(w http.ResponseWriter, r *http.Request) {
 			deviceList = append(deviceList, device)
 		}
 	} else {
-		tempDevices, err := fetchPagingDeviceList(operator, page, size)
-		if err != nil {
-			panic(err)
-		}
+		tempDevices, _ := fetchPagingDeviceList(operator, page, size)
 		// 转换到Device表中
 		for i := 0; i < len(tempDevices); i++ {
 			temp := tempDevices[i]
@@ -276,7 +221,7 @@ func FetchDeviceList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var totalCount int64
-	if page == 1 {
+	if page == 0 {
 		totalCount, err = GetCount(T_AGENCY)
 	}
 
@@ -294,19 +239,10 @@ func GetDeviceInfo(w http.ResponseWriter, r *http.Request) {
 	operatorId := r.URL.Query().Get("operator_id")
 	deviceId := r.URL.Query().Get("device_id")
 
-	if len(operatorId) == 0 || len(deviceId) == 0 {
-		WriteData(w, config.NewError(config.InvalidParameterValue))
-		return
-	}
-
 	// 验证操作人是否存在
-	operator, err := queryUserBaseInfo(operatorId)
+	_, err := queryUserBaseInfo(operatorId)
 	if err != nil {
 		panic(err)
-	}
-	if !ExistUser(operator) {
-		WriteData(w, config.OperaterHasNotExists)
-		return
 	}
 
 	// 验证需要查询的设备是否存在
@@ -321,6 +257,8 @@ func GetDeviceInfo(w http.ResponseWriter, r *http.Request) {
 	device.AgencyId = temp.AgencyId
 	device.Latitude = temp.Latitude
 	device.Longitude = temp.Longitude
+	device.Status = temp.Status
+	device.StatusDesc = config.DeviceStatusDesc(temp.Status)
 	device.CreateTime = temp.CreateTime
 	device.UpdateTime = temp.UpdateTime
 	if len(temp.AgencyNames) > 0 {
@@ -344,9 +282,12 @@ func GetDeviceInfo(w http.ResponseWriter, r *http.Request) {
 
 func queryDeviceBaseInfo(deviceId string) (model.Device, error) {
 	var device model.Device
-	objId := bson.ObjectIdHex(deviceId)
 	query := func(c *mgo.Collection) error {
-		return c.FindId(objId).One(&device)
+		selector := bson.M{
+			"_id": bson.ObjectIdHex(deviceId),
+			"status": bson.M{"$gt": config.DEVICE_STATUS_INVALID},
+		}
+		return c.Find(selector).One(&device)
 	}
 	err := SharedQuery(T_DEVICE, query)
 	return device, err
