@@ -104,22 +104,10 @@ func newLoginRet(user model.User, paths []model.Path) model.LoginRet {
 	var ret model.LoginRet
 	ret.ResultInfo.Status = config.Success
 	ret.ResultInfo.Message = config.TIPS_LOGIN_SUCCEED
-	ret.ResultInfo.Token = generateToken(user.UserId.Hex())
+	ret.ResultInfo.Token = HandleToken(user)
 	ret.RBACData.UserId = user.UserId.Hex()
 	ret.RBACData.UserName = user.UserName
 	ret.RBACData.Role = user.Role
 	ret.RBACData.Paths = paths
 	return ret
-}
-
-func generateToken(uid string) string {
-	token := GenerateToken(uid)
-	if len(token) > 0 {
-		success := SaveToken(uid, token)
-		if success {
-			return token
-		}
-		return ""
-	}
-	return ""
 }

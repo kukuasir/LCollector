@@ -5,6 +5,11 @@
     "msg": "不支持的方法"
   },
   {
+    "code": -101,
+    "name": "InvalidToken",
+    "msg": "无效的Token或Token已经过期"
+  },
+  {
     "code": -1001,
     "name": "AuthenticateFailure",
     "msg": "鉴权错误"

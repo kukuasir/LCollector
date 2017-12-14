@@ -31,6 +31,12 @@ func AddDevice(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
+	// 验证Token的有效性
+	if !ValidToken(operator, req.Token) {
+		WriteData(w, config.InvalidToken)
+		return
+	}
+
 	// 只有超级管理员才有权限添加设备
 	if operator.Role != "root" {
 		WriteData(w, config.NewError(config.PermissionDeniedDevice))
@@ -95,11 +101,18 @@ func DeleteDevice(w http.ResponseWriter, r *http.Request) {
 
 	operatorId := r.URL.Query().Get("operator_id")
 	deviceId := r.URL.Query().Get("device_id")
+	token := r.URL.Query().Get("token")
 
 	// 验证操作人是否存在
 	operator, err := queryUserBaseInfo(operatorId)
 	if err != nil {
 		panic(err)
+	}
+
+	// 验证Token的有效性
+	if !ValidToken(operator, token) {
+		WriteData(w, config.InvalidToken)
+		return
 	}
 
 	// 只有超级管理员才有权限删除设备
@@ -141,6 +154,12 @@ func EditDevice(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
+	// 验证Token的有效性
+	if !ValidToken(operator, req.Token) {
+		WriteData(w, config.InvalidToken)
+		return
+	}
+
 	// 验证需要修改的设备是否存在
 	device, err := queryDeviceBaseInfo(req.DeviceId)
 	if err != nil {
@@ -172,6 +191,7 @@ func EditDevice(w http.ResponseWriter, r *http.Request) {
 func FetchDeviceList(w http.ResponseWriter, r *http.Request) {
 
 	operatorId := r.URL.Query().Get("operator_id")
+	token := r.URL.Query().Get("token")
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
 	if size == 0 {
@@ -182,6 +202,12 @@ func FetchDeviceList(w http.ResponseWriter, r *http.Request) {
 	operator, err := queryUserBaseInfo(operatorId)
 	if err != nil {
 		panic(err)
+	}
+
+	// 验证Token的有效性
+	if !ValidToken(operator, token) {
+		WriteData(w, config.InvalidToken)
+		return
 	}
 
 	var deviceList []model.Device
@@ -238,11 +264,18 @@ func GetDeviceInfo(w http.ResponseWriter, r *http.Request) {
 
 	operatorId := r.URL.Query().Get("operator_id")
 	deviceId := r.URL.Query().Get("device_id")
+	token := r.URL.Query().Get("token")
 
 	// 验证操作人是否存在
-	_, err := queryUserBaseInfo(operatorId)
+	operator, err := queryUserBaseInfo(operatorId)
 	if err != nil {
 		panic(err)
+	}
+
+	// 验证Token的有效性
+	if !ValidToken(operator, token) {
+		WriteData(w, config.InvalidToken)
+		return
 	}
 
 	// 验证需要查询的设备是否存在
@@ -319,18 +352,28 @@ func deleteDeviceByID(deviceId bson.ObjectId) error {
 }
 
 func updateDeviceInfo(req model.DeviceReq) error {
+
+	set := make(bson.M)
+	set["status"] = req.Status
+	set["updatetime"] = time.Now().Unix()
+	if len(req.DeviceName) > 0 {
+		set["device_name"] = req.DeviceName
+	}
+	if len(req.AgencyId) > 0 {
+		set["agency_id"] = req.AgencyId
+	}
+	if req.Latitude > 0.0 {
+		set["latitude"] = req.Latitude
+	}
+	if req.Longitude > 0.0 {
+		set["longitude"] = req.Longitude
+	}
+
 	query := func(c *mgo.Collection) error {
 		update := bson.M{
-			"$set": bson.M{
-				"device_name": req.DeviceName,
-				"agency_id":   req.AgencyId,
-				"latitude":    req.Latitude,
-				"longitude":   req.Longitude,
-				"status":      req.Status,
-				"updatetime":  time.Now().Unix(),
-			},
+			"$set": set,
 		}
-		return c.UpdateId(req.DeviceId, update)
+		return c.UpdateId(bson.ObjectIdHex(req.DeviceId), update)
 	}
 	return SharedQuery(T_DEVICE, query)
 }

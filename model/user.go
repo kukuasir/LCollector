@@ -23,31 +23,35 @@ type User struct {
 	CreateTime    int64         `json:"create_time" bson:"create_time"`            // 创建时间
 	UpdateTime    int64         `json:"update_time" bson:"update_time"`            // 最后更新时间
 	Devices       []DeviceCheck `json:"devices,omitempty"`                         // 可以查看或操作的设备列表
+	// Token和有效期只有在登录时才返回
+	Token  string `json:"token"`  // token
+	Expire int64  `json:"expire"` // 失效时间
 }
 
 /** 临时-用户与组织机构关联信息 */
 type TempUser struct {
-	UserId        bson.ObjectId   `json:"user_id" bson:"_id,omitempty"`           // 用户唯一ID
-	UserName      string          `json:"user_name" bson:"user_name"`             // 用户名(不可重复)
-	Gender        int64           `json:"gender"`                                 // 性别(0:男 1:女)
-	AgencyId      bson.ObjectId   `json:"agency_id" bson:"agency_id"`             // 所属组织机构ID
-	Role          string          `json:"role"`                                   // 角色
-	Status        int64           `json:"status"`                                 // 状态
-	LastLoginTime int64           `json:"last_login_time" bson:"last_login_time"` // 最后一次登录时间
-	LastLoginIP   string          `json:"last_login_ip" bson:"last_login_ip"`     // 最后一次登录的IP
-	CreateTime    int64           `json:"create_time" bson:"create_time"`         // 创建时间
-	UpdateTime    int64           `json:"update_time" bson:"update_time"`         // 最后更新时间
-	AgencyNames   []string        `json:"agency_names" bson:"agency_names"`       // 组织机构名列表
-	UsableDevices []Device        `json:"device_docs" bson:"device_docs"`         // 用户可操作的设备列表
+	UserId        bson.ObjectId `json:"user_id" bson:"_id,omitempty"`           // 用户唯一ID
+	UserName      string        `json:"user_name" bson:"user_name"`             // 用户名(不可重复)
+	Gender        int64         `json:"gender"`                                 // 性别(0:男 1:女)
+	AgencyId      bson.ObjectId `json:"agency_id" bson:"agency_id"`             // 所属组织机构ID
+	Role          string        `json:"role"`                                   // 角色
+	Status        int64         `json:"status"`                                 // 状态
+	LastLoginTime int64         `json:"last_login_time" bson:"last_login_time"` // 最后一次登录时间
+	LastLoginIP   string        `json:"last_login_ip" bson:"last_login_ip"`     // 最后一次登录的IP
+	CreateTime    int64         `json:"create_time" bson:"create_time"`         // 创建时间
+	UpdateTime    int64         `json:"update_time" bson:"update_time"`         // 最后更新时间
+	AgencyNames   []string      `json:"agency_names" bson:"agency_names"`       // 组织机构名列表
+	UsableDevices []Device      `json:"device_docs" bson:"device_docs"`         // 用户可操作的设备列表
 }
 
 /** 用于添加或修改用户信息请求的结构体 */
 type UserReq struct {
 	OperatorId string   `json:"operator_id"` // 操作人员的ID
 	UserId     string   `json:"user_id"`     // 目标用户ID
+	Token      string   `json:"token"`       // Token
 	UserName   string   `json:"user_name"`   // 用户账号
 	Password   string   `json:"password"`    // 用户密码
-	Gender     int64    `json:"gender"`      // 性别(0:男 1:女)
+	Gender     int64    `json:"gender"`      // 性别(1:男 2:女 -1:保密)
 	Birth      string   `json:"birth"`       // 出生年月
 	Mobile     string   `json:"mobile"`      // 联系方式
 	AgencyId   string   `json:"agency_id"`   // 所属机构ID
@@ -61,13 +65,6 @@ type UserReq struct {
 type UserDevices struct {
 	UserId  bson.ObjectId `json:"user_id" bson:"user_id"`
 	Devices []Device      `json:"devices"`
-}
-
-/** 用户与Token关联信息 */
-type UserToken struct {
-	UserId bson.ObjectId `json:"user_id"` // 用户唯一ID
-	Token  string        `json:"token"`   // token
-	Expire int64         `json:"expire"`  // 失效时间
 }
 
 /** Api返回的用户列表 */

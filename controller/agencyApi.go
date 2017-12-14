@@ -31,6 +31,12 @@ func AddAgency(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
+	// 验证Token的有效性
+	if !ValidToken(operator, req.Token) {
+		WriteData(w, config.InvalidToken)
+		return
+	}
+
 	// 只有超级管理员才有权限操作组织机构
 	if operator.Role != "root" {
 		WriteData(w, config.NewError(config.PermissionDeniedAgency))
@@ -63,11 +69,18 @@ func DeleteAgency(w http.ResponseWriter, r *http.Request) {
 
 	operatorId := r.URL.Query().Get("operator_id")
 	agencyId := r.URL.Query().Get("agency_id")
+	token := r.URL.Query().Get("token")
 
 	// 验证操作人是否存在
 	operator, err := queryUserBaseInfo(operatorId)
 	if err != nil {
 		panic(err)
+	}
+
+	// 验证Token的有效性
+	if !ValidToken(operator, token) {
+		WriteData(w, config.InvalidToken)
+		return
 	}
 
 	// 只有超级管理员才有权限操作组织机构
@@ -89,10 +102,7 @@ func DeleteAgency(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 同时把改组织机构下的用户都置为无效
-	err = deleteUsersInAgency(agency.AgencyId, config.AGENCY_STATUS_INVALID)
-	if err != nil {
-		panic(err)
-	}
+	deleteUsersInAgency(agency.AgencyId, config.AGENCY_STATUS_INVALID)
 
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
@@ -120,6 +130,12 @@ func EditAgency(w http.ResponseWriter, r *http.Request) {
 	operator, err := queryUserBaseInfo(req.OperatorId)
 	if err != nil {
 		panic(err)
+	}
+
+	// 验证Token的有效性
+	if !ValidToken(operator, req.Token) {
+		WriteData(w, config.InvalidToken)
+		return
 	}
 
 	// 只有超级管理员才有权限操作组织机构
@@ -152,6 +168,7 @@ func EditAgency(w http.ResponseWriter, r *http.Request) {
 func FetchAgencyList(w http.ResponseWriter, r *http.Request) {
 
 	operatorId := r.URL.Query().Get("operator_id")
+	token := r.URL.Query().Get("token")
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
 	if size == 0 {
@@ -159,9 +176,15 @@ func FetchAgencyList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证操作人是否存在
-	_, err := queryUserBaseInfo(operatorId)
+	operator, err := queryUserBaseInfo(operatorId)
 	if err != nil {
 		panic(err)
+	}
+
+	// 验证Token的有效性
+	if !ValidToken(operator, token) {
+		WriteData(w, config.InvalidToken)
+		return
 	}
 
 	agencyList, _ := fetchPagingAgencyList(page, size)
@@ -184,11 +207,18 @@ func GetAgencyInfo(w http.ResponseWriter, r *http.Request) {
 
 	operatorId := r.URL.Query().Get("operator_id")
 	agencyId := r.URL.Query().Get("agency_id")
+	token := r.URL.Query().Get("token")
 
 	// 验证操作人是否存在
-	_, err := queryUserBaseInfo(operatorId)
+	operator, err := queryUserBaseInfo(operatorId)
 	if err != nil {
 		panic(err)
+	}
+
+	// 验证Token的有效性
+	if !ValidToken(operator, token) {
+		WriteData(w, config.InvalidToken)
+		return
 	}
 
 	// 验证需要查询的用户是否存在
@@ -209,9 +239,24 @@ func GetAgencyInfo(w http.ResponseWriter, r *http.Request) {
 
 func FetchAgencyDevices(w http.ResponseWriter, r *http.Request) {
 
+	operatorId := r.URL.Query().Get("operator_id")
 	agencyId := r.URL.Query().Get("agency_id")
+	token := r.URL.Query().Get("token")
+
 	if len(agencyId) == 0 {
 		panic("parameters error")
+	}
+
+	// 验证操作人是否存在
+	operator, err := queryUserBaseInfo(operatorId)
+	if err != nil {
+		panic(err)
+	}
+
+	// 验证Token的有效性
+	if !ValidToken(operator, token) {
+		WriteData(w, config.InvalidToken)
+		return
 	}
 
 	deviceList, _ := fetchDeviceListInAgency(agencyId)
@@ -290,18 +335,28 @@ func deleteUsersInAgency(agencyId bson.ObjectId, status int64) error {
 
 // 修改组织机构信息
 func updateAgencyInfo(req model.AgencyReq) error {
+
+	set := make(bson.M)
+	set["status"] = req.Status
+	set["updatetime"] = time.Now().Unix()
+	if len(req.AgencyName) > 0 {
+		set["agency_name"] = req.AgencyName
+	}
+	if len(req.ContactName) > 0 {
+		set["contact_name"] = req.ContactName
+	}
+	if len(req.ContactNumber) > 0 {
+		set["contact_number"] = req.ContactNumber
+	}
+	if len(req.ContactAddr) > 0 {
+		set["contact_addr"] = req.ContactAddr
+	}
+
 	query := func(c *mgo.Collection) error {
 		update := bson.M{
-			"$set": bson.M{
-				"agency_name":    req.AgencyName,
-				"contact_name":   req.ContactName,
-				"contact_number": req.ContactNumber,
-				"contact_addr":   req.ContactAddr,
-				"status":         req.Status,
-				"updatetime":     time.Now().Unix(),
-			},
+			"$set": set,
 		}
-		return c.UpdateId(req.AgencyId, update)
+		return c.UpdateId(bson.ObjectIdHex(req.AgencyId), update)
 	}
 	return SharedQuery(T_AGENCY, query)
 }

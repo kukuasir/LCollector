@@ -31,6 +31,12 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
+	// 验证Token的有效性
+	if !ValidToken(operator, req.Token) {
+		WriteData(w, config.InvalidToken)
+		return
+	}
+
 	// 验证被添加用户是否存在
 	user, err := queryUserByUname(req.UserName)
 	if ExistUser(user) {
@@ -64,11 +70,18 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	operatorId := r.URL.Query().Get("operator_id")
 	userId := r.URL.Query().Get("user_id")
+	token := r.URL.Query().Get("token")
 
 	// 验证操作人是否存在
 	operator, err := queryUserBaseInfo(operatorId)
 	if err != nil {
 		panic(err)
+	}
+
+	// 验证Token的有效性
+	if !ValidToken(operator, token) {
+		WriteData(w, config.InvalidToken)
+		return
 	}
 
 	// 验证需要删除的用户是否存在
@@ -115,6 +128,12 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 	operator, err := queryUserBaseInfo(req.OperatorId)
 	if err != nil {
 		panic(err)
+	}
+
+	// 验证Token的有效性
+	if !ValidToken(operator, req.Token) {
+		WriteData(w, config.InvalidToken)
+		return
 	}
 
 	// 验证需要修改的用户是否存在
@@ -170,6 +189,12 @@ func UpdatePwd(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
+	// 验证Token的有效性
+	if !ValidToken(operator, req.Token) {
+		WriteData(w, config.InvalidToken)
+		return
+	}
+
 	// 验证用户是否存在
 	user, err := queryUserBaseInfo(req.UserId)
 	if err != nil {
@@ -194,6 +219,7 @@ func UpdatePwd(w http.ResponseWriter, r *http.Request) {
 func FetchUserList(w http.ResponseWriter, r *http.Request) {
 
 	operatorId := r.URL.Query().Get("operator_id")
+	token := r.URL.Query().Get("token")
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
 	if size == 0 {
@@ -204,6 +230,12 @@ func FetchUserList(w http.ResponseWriter, r *http.Request) {
 	operator, err := queryUserBaseInfo(operatorId)
 	if err != nil {
 		panic(err)
+	}
+
+	// 验证Token的有效性
+	if !ValidToken(operator, token) {
+		WriteData(w, config.InvalidToken)
+		return
 	}
 
 	tempUsers, err := fetchPagingUserList(operator, page, size)
@@ -250,11 +282,18 @@ func GetUserInfo(w http.ResponseWriter, r *http.Request) {
 
 	operatorId := r.URL.Query().Get("operator_id")
 	userId := r.URL.Query().Get("user_id")
+	token := r.URL.Query().Get("token")
 
 	// 验证操作人是否存在
-	_, err := queryUserBaseInfo(operatorId)
+	operator, err := queryUserBaseInfo(operatorId)
 	if err != nil {
 		panic(err)
+	}
+
+	// 验证Token的有效性
+	if !ValidToken(operator, token) {
+		WriteData(w, config.InvalidToken)
+		return
 	}
 
 	// 验证需要查询的用户是否存在
@@ -304,7 +343,7 @@ func queryUserBaseInfo(userId string) (model.User, error) {
 	var user model.User
 	query := func(c *mgo.Collection) error {
 		selector := bson.M{
-			"_id": bson.ObjectIdHex(userId),
+			"_id":    bson.ObjectIdHex(userId),
 			"status": bson.M{"$gt": config.USER_STATUS_INVALID},
 		}
 		return c.Find(selector).One(&user)
@@ -330,6 +369,8 @@ func addUserInfo(req model.UserReq) error {
 			"status":     config.USER_STATUS_NORMAL,
 			"createtime": time.Now().Unix(),
 			"updatetime": time.Now().Unix(),
+			"token":      "",
+			"expire":     0,
 		}
 		return c.Insert(insert)
 	}
@@ -347,18 +388,32 @@ func deleteUserByID(userId bson.ObjectId) error {
 
 // 修改用户信息
 func updateUserInfo(req model.UserReq) error {
+
+	set := make(bson.M)
+	set["status"] = req.Status
+	set["updatetime"] = time.Now().Unix()
+	if req.Gender != 0 {
+		set["gender"] = req.Gender
+	}
+	if len(req.Birth) > 0 {
+		set["birth"] = req.Birth
+	}
+	if len(req.Mobile) > 0 {
+		set["mobile"] = req.Mobile
+	}
+	if len(req.AgencyId) > 0 {
+		set["agency_id"] = req.AgencyId
+	}
+	if len(req.Role) > 0 {
+		set["role"] = req.Role
+	}
+	if len(req.Priority) > 0 {
+		set["priority"] = req.Priority
+	}
+
 	query := func(c *mgo.Collection) error {
 		update := bson.M{
-			"$set": bson.M{
-				"gender":     req.Gender,
-				"birth":      req.Birth,
-				"mobile":     req.Mobile,
-				"agency_id":  req.AgencyId,
-				"role":       req.Role,
-				"priority":   req.Priority,
-				"status":     req.Status,
-				"updatetime": time.Now().Unix(),
-			},
+			"$set": set,
 		}
 		return c.UpdateId(req.UserId, update)
 	}

@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"regexp"
+	"time"
 )
 
 func WriteData(w http.ResponseWriter, res interface{}) {
@@ -23,6 +25,40 @@ func WriteData(w http.ResponseWriter, res interface{}) {
 	defer func() {
 		w.Write(data)
 	}()
+}
+
+// 验证手机号格式
+func CheckMobile(mobile string) bool {
+
+	if len(mobile) != 11 {
+		return false
+	}
+
+	/**
+     * 手机号码:
+     * 13[0-9], 14[5,7, 9], 15[0, 1, 2, 3, 5, 6, 7, 8, 9], 17[0-9], 18[0-9]
+     */
+	reg := `^1(3[0-9]|4[579]|5[0-35-9]|7[0-9]|8[0-9])\\d{8}$`
+	rex := regexp.MustCompile(reg)
+	return rex.MatchString(mobile)
+}
+
+// 验证Token是否有效
+func ValidToken(user model.User, token string) bool {
+	if !config.System.CheckToken {
+		return true
+	}
+	if len(token) == 0 {
+		return false
+	}
+	if token == user.Token {
+		return false
+	}
+	if (user.Expire + config.System.ValidSecs) < time.Now().Unix() {
+		return false
+	} else {
+		return true
+	}
 }
 
 // 判断组织机构是否存在

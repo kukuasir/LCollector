@@ -13,7 +13,6 @@ const (
 	T_LOGIN_LOG    = "t_login_log"    // 登录日志表
 	T_OPERATE_LOG  = "t_operate_log"  // 操作日志表
 	T_MESSAGE_LOG  = "t_message_log"  // 消息日志表
-	T_USER_TOKEN   = "t_user_token"   // 用户Token关联表
 	T_ROLE_PATH    = "t_role_path"    // 角色权限关联表
 )
 

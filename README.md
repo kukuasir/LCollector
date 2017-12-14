@@ -21,19 +21,20 @@ db.t_agency.insert({
 });
 
 db.t_user.insert({
-    "user_name": "######",
-    "password": "######",
-    "gender": NumberInt(######),
-    "birth": "######",
-    "mobile": "######",
-    "agency_id": "######",
-    "role": "root",
-    "priority": "######",
-    "status": NumberInt(0),
-    "last_login_time": NumberLong(0),
-    "last_login_ip": "",
-    "create_time": NumberLong(######),
-    "update_time": NumberLong(######)
+    #"_id" : ObjectId("5a1d14d246400555786d169a"),
+    "user_name" : "root",
+    "password" : "ff9830c42660c1dd1942844f8069b74a",
+    "gender" : 1,
+    "birth" : "1986-06-01",
+    "mobile" : "13200000001",
+    "agency_id" : ObjectId("5a1d11b946400555786d1699"),
+    "role" : "root",
+    "priority" : "123",
+    "status" : 0,
+    "last_login_time" : NumberLong(0),
+    "last_login_ip" : "",
+    "create_time" : NumberLong(1513266349),
+    "update_time" : NumberLong(1513266349)
 });
 
 db.t_agency.find({});

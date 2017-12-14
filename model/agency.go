@@ -19,6 +19,7 @@ type Agency struct {
 type AgencyReq struct {
 	OperatorId    string `json:"operator_id"`    // 操作人员ID
 	AgencyId      string `json:"agency_id"`      // 组织机构ID
+	Token         string `json:"token"`          // Token
 	AgencyName    string `json:"agency_name"`    // 机构名称
 	ContactName   string `json:"contact_name"`   // 联系人
 	ContactNumber string `json:"contact_number"` // 联系电话

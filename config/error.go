@@ -9,6 +9,7 @@ import (
 /** 自定义错误码 */
 const (
 	UnsupportedRequestMethod = -100 // 不支持的方法
+	InvalidToken             = -101 // 无效的Token或Token已经过期
 
 	AuthenticateFailure      = -1001 // 鉴权失败
 	InvalidParameterValue    = -1002 // 数据格式有误

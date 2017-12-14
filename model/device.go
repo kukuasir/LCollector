@@ -40,6 +40,7 @@ type DeviceCheck struct {
 type DeviceReq struct {
 	OperatorId string  `json:"operator_id"` // 操作人员的ID
 	DeviceId   string  `json:"device_id"`   // 设备编号
+	Token      string  `json:"token"`       // Token
 	DeviceName string  `json:"device_name"` // 设备名称
 	AgencyId   string  `json:"agency_id"`   // 所属机构ID
 	Latitude   float64 `json:"latitude"`    // 维度
