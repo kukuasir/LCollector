@@ -16,7 +16,7 @@ func FetchMessageLogList(w http.ResponseWriter, r *http.Request) {
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
 	if size == 0 {
-		size = 20  // 默认一页加载20条数据
+		size = 20 // 默认一页加载20条数据
 	}
 
 	// 验证操作人是否存在
@@ -54,7 +54,7 @@ func FetchOperateLogList(w http.ResponseWriter, r *http.Request) {
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
 	if size == 0 {
-		size = 20  // 默认一页加载20条数据
+		size = 20 // 默认一页加载20条数据
 	}
 
 	// 验证操作人是否存在
@@ -80,8 +80,8 @@ func FetchOperateLogList(w http.ResponseWriter, r *http.Request) {
 		log.CreateTime = temp.CreateTime
 		log.SourceIP = temp.SourceIP
 		log.AgencyId = temp.AgencyId
-		if len(temp.AgencyNames) > 0 {
-			log.AgencyName = temp.AgencyNames[0]
+		if len(temp.UserNames) > 0 {
+			log.OperatorName = temp.UserNames[0]
 		}
 		operateLogs = append(operateLogs, log)
 	}
@@ -107,7 +107,7 @@ func FetchLoginLogList(w http.ResponseWriter, r *http.Request) {
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
 	if size == 0 {
-		size = 20  // 默认一页加载20条数据
+		size = 20 // 默认一页加载20条数据
 	}
 
 	// 验证操作人是否存在
@@ -131,8 +131,8 @@ func FetchLoginLogList(w http.ResponseWriter, r *http.Request) {
 		log.AgencyId = temp.AgencyId
 		log.CreateTime = temp.CreateTime
 		log.SourceIP = temp.SourceIP
-		if len(temp.AgencyNames) > 0 {
-			log.AgencyName = temp.AgencyNames[0]
+		if len(temp.UserNames) > 0 {
+			log.UserName = temp.UserNames[0]
 		}
 		loginLogs = append(loginLogs, log)
 	}
@@ -229,14 +229,14 @@ func fetchPagingLoginLogs(operator model.User, page, size int) ([]model.TempLogi
 			bson.M{"$skip": page * size},
 			bson.M{"$limit": size},
 			bson.M{"$sort": bson.M{"create_time": -1}},
-			bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency_docs"}},
+			bson.M{"$lookup": bson.M{"from": T_USER, "localField": "user_id", "foreignField": "_id", "as": "user_docs"}},
 			bson.M{"$project": bson.M{
-				"user_id":      1,
-				"status":       1,
-				"agency_id":    1,
-				"create_time":  1,
-				"source_ip":    1,
-				"agency_names": "$agency_docs.agency_name",
+				"user_id":     1,
+				"status":      1,
+				"agency_id":   1,
+				"create_time": 1,
+				"source_ip":   1,
+				"user_names":  "$user_docs.user_name",
 			}},
 		}
 		if operator.Role == "admin" {
@@ -263,19 +263,19 @@ func fetchPagingOperateLogs(operator model.User, page, size int) ([]model.TempOp
 			bson.M{"$skip": page * size},
 			bson.M{"$limit": size},
 			bson.M{"$sort": bson.M{"create_time": -1}},
-			bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency_docs"}},
+			bson.M{"$lookup": bson.M{"from": T_USER, "localField": "operator_id", "foreignField": "_id", "as": "user_docs"}},
 			bson.M{"$project": bson.M{
-				"type":         1,
-				"target":       1,
-				"object":       1,
-				"operator_id":  1,
-				"agency_id":    1,
-				"create_time":  1,
-				"source_ip":    1,
-				"agency_names": "$agency_docs.agency_name",
+				"type":        1,
+				"target":      1,
+				"object":      1,
+				"operator_id": 1,
+				"agency_id":   1,
+				"create_time": 1,
+				"source_ip":   1,
+				"user_names":  "$user_docs.user_name",
 			}},
 		}
-		if operator.Role == "admin" {
+		if operator.Role == "admin"  {
 			pipeline = append(pipeline, bson.M{"$match": bson.M{"agency_id": operator.AgencyId}})
 		}
 		return c.Pipe(pipeline).All(&tempLogs)

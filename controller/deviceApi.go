@@ -38,8 +38,8 @@ func AddDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证需要添加的设备是否存在，存在则不能重复添加
-	_, err = queryDeviceBaseInfo(req.DeviceId)
-	if err != nil {
+	device, err := queryDeviceBaseInfo(req.DeviceId)
+	if err == nil && len(device.DeviceId) > 0 {
 		panic(err)
 	}
 

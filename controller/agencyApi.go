@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"time"
 	"strconv"
-	"os/user"
 )
 
 func AddAgency(w http.ResponseWriter, r *http.Request) {
