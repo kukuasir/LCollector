@@ -433,7 +433,7 @@ func updateUserInfo(req model.UserReq) error {
 		set["mobile"] = req.Mobile
 	}
 	if len(req.AgencyId) > 0 {
-		set["agency_id"] = req.AgencyId
+		set["agency_id"] = bson.ObjectIdHex(req.AgencyId)
 	}
 	if len(req.Role) > 0 {
 		set["role"] = req.Role
@@ -446,7 +446,7 @@ func updateUserInfo(req model.UserReq) error {
 		update := bson.M{
 			"$set": set,
 		}
-		return c.UpdateId(req.UserId, update)
+		return c.UpdateId(bson.ObjectIdHex(req.UserId), update)
 	}
 	return SharedQuery(T_USER, query)
 }
@@ -455,7 +455,7 @@ func updateUserInfo(req model.UserReq) error {
 func updatePwd(req model.UserReq) error {
 	query := func(c *mgo.Collection) error {
 		update := bson.M{"$set": bson.M{"password": req.Password}}
-		return c.UpdateId(req.UserId, update)
+		return c.UpdateId(bson.ObjectIdHex(req.UserId), update)
 	}
 	return SharedQuery(T_USER, query)
 }

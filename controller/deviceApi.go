@@ -359,9 +359,9 @@ func queryDeviceBaseInfo(deviceId string) (model.Device, error) {
 func addDeviceInfo(req model.DeviceReq) error {
 	query := func(c *mgo.Collection) error {
 		insert := bson.M{
-			"_id":         req.DeviceId,
+			"_id":         bson.ObjectIdHex(req.DeviceId),
 			"device_name": req.DeviceName,
-			"agency_id":   req.AgencyId,
+			"agency_id":   bson.ObjectIdHex(req.AgencyId),
 			"latitude":    req.Latitude,
 			"longitude":   req.Longitude,
 			"status":      config.DEVICE_STATUS_NORMAL,
@@ -390,7 +390,7 @@ func updateDeviceInfo(req model.DeviceReq) error {
 		set["device_name"] = req.DeviceName
 	}
 	if len(req.AgencyId) > 0 {
-		set["agency_id"] = req.AgencyId
+		set["agency_id"] = bson.ObjectIdHex(req.AgencyId)
 	}
 	if req.Latitude > 0.0 {
 		set["latitude"] = req.Latitude
@@ -441,10 +441,9 @@ func fetchPagingDeviceList(operator model.User, page, size int) ([]model.TempDev
 
 func fetchDeviceInfo(deviceId string) (model.TempDevice, error) {
 	var tempDevice model.TempDevice
-	objId := bson.ObjectIdHex(deviceId)
 	query := func(c *mgo.Collection) error {
 		pipeline := []bson.M{
-			bson.M{"$match": bson.M{"_id": objId}},
+			bson.M{"$match": bson.M{"_id": bson.ObjectIdHex(deviceId)}},
 			bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency_docs"}},
 			bson.M{"$project": bson.M{
 				"_id":          1,
