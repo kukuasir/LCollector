@@ -392,11 +392,8 @@ func deleteDeviceByNO(deviceNo string) error {
 
 func updateDeviceInfo(req model.DeviceReq) error {
 
-	selector := bson.M{"device_no": req.DeviceNo}
-
 	set := make(bson.M)
-	set["status"] = req.Status
-	set["update_time"] = time.Now().Unix()
+
 	if len(req.DeviceName) > 0 {
 		set["device_name"] = req.DeviceName
 	}
@@ -409,12 +406,16 @@ func updateDeviceInfo(req model.DeviceReq) error {
 	if req.Longitude > 0.0 {
 		set["longitude"] = req.Longitude
 	}
+	if req.Status != 0 {
+		set["status"] = req.Status
+	}
+	set["update_time"] = time.Now().Unix()
 
 	query := func(c *mgo.Collection) error {
 		update := bson.M{
 			"$set": set,
 		}
-		return c.Update(selector, update)
+		return c.Update(bson.M{"device_no": req.DeviceNo}, update)
 	}
 	return SharedQuery(T_DEVICE, query)
 }

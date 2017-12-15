@@ -368,8 +368,7 @@ func deleteUsersInAgency(agencyId bson.ObjectId, status int64) error {
 func updateAgencyInfo(req model.AgencyReq) error {
 
 	set := make(bson.M)
-	set["status"] = req.Status
-	set["update_time"] = time.Now().Unix()
+
 	if len(req.AgencyName) > 0 {
 		set["agency_name"] = req.AgencyName
 	}
@@ -382,6 +381,10 @@ func updateAgencyInfo(req model.AgencyReq) error {
 	if len(req.ContactAddr) > 0 {
 		set["contact_addr"] = req.ContactAddr
 	}
+	if req.Status != 0 {
+		set["status"] = req.Status
+	}
+	set["update_time"] = time.Now().Unix()
 
 	query := func(c *mgo.Collection) error {
 		update := bson.M{

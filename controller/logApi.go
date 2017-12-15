@@ -37,7 +37,13 @@ func FetchMessageLogList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	logList, err := fetchPagingMessageLogs(operator, page, size)
+	var logList []model.MessageLog
+	templogs, err := fetchPagingMessageLogs(operator, page, size)
+	for i := 0; i < len(templogs); i++ {
+		log := templogs[i]
+		log.StatusDesc = config.DeviceStatusDesc(log.Status)
+		logList = append(logList, log)
+	}
 
 	// 计算数据总条数
 	var totalCount int64

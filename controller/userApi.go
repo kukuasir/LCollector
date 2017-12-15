@@ -25,8 +25,13 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 	var req model.UserReq
 	json.Unmarshal(body, &req)
 
+	// 密码设置默认值
+	if len(req.Password) == 0 {
+		req.Password = req.UserName + "123"
+	}
+
 	// 校验请求参数
-	if len(req.UserName) == 0 || len(req.Password) == 0 || len(req.Role) == 0 || len(req.AgencyId) == 0 {
+	if len(req.UserName) == 0 || len(req.Role) == 0 || len(req.AgencyId) == 0 {
 		WriteData(w, config.NewError(config.InvalidParameterValue))
 		return
 	}
@@ -134,14 +139,14 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 	var req model.UserReq
 	json.Unmarshal(body, &req)
 
-	// 校验请求参数
-	if len(req.UserName) == 0 || len(req.Password) == 0 || len(req.Role) == 0 || len(req.AgencyId) == 0 {
-		WriteData(w, config.NewError(config.InvalidParameterValue))
-		return
-	}
-
 	// 验证操作人是否存在
 	operator, err := queryUserBaseInfo(req.OperatorId)
+	if err != nil {
+		panic(err)
+	}
+
+	// 验证需要修改的用户是否存在
+	user, err := queryUserBaseInfo(req.UserId)
 	if err != nil {
 		panic(err)
 	}
@@ -150,12 +155,6 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 	if !ValidToken(operator, req.Token) {
 		WriteData(w, config.NewError(config.InvalidToken))
 		return
-	}
-
-	// 验证需要修改的用户是否存在
-	user, err := queryUserBaseInfo(req.UserId)
-	if err != nil {
-		panic(err)
 	}
 
 	// 验证操作人是否有权限修改对象
@@ -385,9 +384,17 @@ func queryUserBaseInfo(userId string) (model.User, error) {
 
 // 添加用户数据
 func addUserInfo(req model.UserReq) error {
+
+	var status int64
+	if len(req.AgencyId) > 0 {
+		status = config.USER_STATUS_NORMAL
+	} else {
+		status = config.USER_STATUS_UNALLOC
+	}
+
 	query := func(c *mgo.Collection) error {
 		insert := bson.M{
-			"username":   req.UserName,
+			"user_name":  req.UserName,
 			"password":   util.MD5Encrypt(req.Password),
 			"gender":     req.Gender,
 			"birth":      req.Birth,
@@ -395,13 +402,9 @@ func addUserInfo(req model.UserReq) error {
 			"agency_id":  bson.ObjectIdHex(req.AgencyId),
 			"role":       req.Role,
 			"priority":   req.Priority,
-			"lasttime":   0,
-			"lastonip":   "",
-			"status":     config.USER_STATUS_NORMAL,
+			"status":     status,
 			"create_time": time.Now().Unix(),
 			"update_time": time.Now().Unix(),
-			"token":      "",
-			"expire":     0,
 		}
 		return c.Insert(insert)
 	}
@@ -421,8 +424,10 @@ func deleteUserByID(userId bson.ObjectId) error {
 func updateUserInfo(req model.UserReq) error {
 
 	set := make(bson.M)
-	set["status"] = req.Status
-	set["update_time"] = time.Now().Unix()
+
+	if len(req.UserName) > 0 {
+		set["user_name"] = req.UserName
+	}
 	if len(req.Password) > 0 {
 		set["password"] = req.Password
 	}
@@ -444,6 +449,10 @@ func updateUserInfo(req model.UserReq) error {
 	if len(req.Priority) > 0 {
 		set["priority"] = req.Priority
 	}
+	if req.Status != 0 {
+		set["status"] = req.Status
+	}
+	set["update_time"] = time.Now().Unix()
 
 	query := func(c *mgo.Collection) error {
 		update := bson.M{

@@ -101,6 +101,8 @@ type MessageLog struct {
 	Type       int64         `json:"type"`                           // 消息类型
 	DeviceId   bson.ObjectId `json:"device_id" bson:"device_id"`     // 发送或接收消息的设备编号
 	Content    string        `json:"content"`                        // 发送或接收的消息内容
+	Status     int64         `json:"status,omitempty"`               // 状态
+	StatusDesc string        `json:"status_desc,omitempty"`          // 状态描述
 	CreateTime int64         `json:"create_time" bson:"create_time"` // 创建时间
 	SourceIP   string        `json:"source_ip" bson:"source_ip"`     // 来源IP
 }
