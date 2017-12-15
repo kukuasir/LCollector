@@ -27,7 +27,7 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 
 	// 校验请求参数
 	if len(req.UserName) == 0 || len(req.Password) == 0 || len(req.Role) == 0 || len(req.AgencyId) == 0 {
-		WriteData(w, config.InvalidParameterValue)
+		WriteData(w, config.NewError(config.InvalidParameterValue))
 		return
 	}
 
@@ -39,14 +39,14 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 
 	// 验证Token的有效性
 	if !ValidToken(operator, req.Token) {
-		WriteData(w, config.InvalidToken)
+		WriteData(w, config.NewError(config.InvalidToken))
 		return
 	}
 
 	// 验证被添加用户是否存在
 	user, err := queryUserByUname(req.UserName)
 	if ExistUser(user) {
-		WriteData(w, config.UserHasAlreadyExists)
+		WriteData(w, config.NewError(config.UserHasAlreadyExists))
 		return
 	}
 
@@ -55,8 +55,8 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	if len(req.DeviceIds) > 0 {
-		err = UpsertDeviceIsBy(req.UserId, req.DeviceIds)
+	if len(req.DeviceNos) > 0 {
+		err = upsertDeviceNoArray(req.UserId, req.DeviceNos)
 		if err != nil {
 			panic(err)
 		}
@@ -91,7 +91,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	// 验证Token的有效性
 	if !ValidToken(operator, token) {
-		WriteData(w, config.InvalidToken)
+		WriteData(w, config.NewError(config.InvalidToken))
 		return
 	}
 
@@ -136,7 +136,7 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 
 	// 校验请求参数
 	if len(req.UserName) == 0 || len(req.Password) == 0 || len(req.Role) == 0 || len(req.AgencyId) == 0 {
-		WriteData(w, config.InvalidParameterValue)
+		WriteData(w, config.NewError(config.InvalidParameterValue))
 		return
 	}
 
@@ -148,7 +148,7 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 
 	// 验证Token的有效性
 	if !ValidToken(operator, req.Token) {
-		WriteData(w, config.InvalidToken)
+		WriteData(w, config.NewError(config.InvalidToken))
 		return
 	}
 
@@ -170,8 +170,8 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	if len(req.DeviceIds) > 0 {
-		err = UpsertDeviceIsBy(req.UserId, req.DeviceIds)
+	if len(req.DeviceNos) > 0 {
+		err = upsertDeviceNoArray(req.UserId, req.DeviceNos)
 		if err != nil {
 			panic(err)
 		}
@@ -200,7 +200,7 @@ func UpdatePwd(w http.ResponseWriter, r *http.Request) {
 
 	// 校验请求参数
 	if len(req.Password) == 0 {
-		WriteData(w, config.InvalidParameterValue)
+		WriteData(w, config.NewError(config.InvalidParameterValue))
 		return
 	}
 
@@ -212,7 +212,7 @@ func UpdatePwd(w http.ResponseWriter, r *http.Request) {
 
 	// 验证Token的有效性
 	if !ValidToken(operator, req.Token) {
-		WriteData(w, config.InvalidToken)
+		WriteData(w, config.NewError(config.InvalidToken))
 		return
 	}
 
@@ -260,7 +260,7 @@ func FetchUserList(w http.ResponseWriter, r *http.Request) {
 
 	// 验证Token的有效性
 	if !ValidToken(operator, token) {
-		WriteData(w, config.InvalidToken)
+		WriteData(w, config.NewError(config.InvalidToken))
 		return
 	}
 
@@ -323,7 +323,7 @@ func GetUserInfo(w http.ResponseWriter, r *http.Request) {
 
 	// 验证Token的有效性
 	if !ValidToken(operator, token) {
-		WriteData(w, config.InvalidToken)
+		WriteData(w, config.NewError(config.InvalidToken))
 		return
 	}
 
@@ -350,7 +350,7 @@ func GetUserInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !ExistUser(user) {
-		WriteData(w, config.UserHasNotExists)
+		WriteData(w, config.NewError(config.UserHasNotExists))
 		return
 	}
 
@@ -398,8 +398,8 @@ func addUserInfo(req model.UserReq) error {
 			"lasttime":   0,
 			"lastonip":   "",
 			"status":     config.USER_STATUS_NORMAL,
-			"createtime": time.Now().Unix(),
-			"updatetime": time.Now().Unix(),
+			"create_time": time.Now().Unix(),
+			"update_time": time.Now().Unix(),
 			"token":      "",
 			"expire":     0,
 		}
@@ -422,7 +422,10 @@ func updateUserInfo(req model.UserReq) error {
 
 	set := make(bson.M)
 	set["status"] = req.Status
-	set["updatetime"] = time.Now().Unix()
+	set["update_time"] = time.Now().Unix()
+	if len(req.Password) > 0 {
+		set["password"] = req.Password
+	}
 	if req.Gender != 0 {
 		set["gender"] = req.Gender
 	}
@@ -461,10 +464,10 @@ func updatePwd(req model.UserReq) error {
 }
 
 // 把用户可操作的设备ID列表插入到关联表中
-func UpsertDeviceIsBy(userId string, deviceIds []string) error {
+func upsertDeviceNoArray(userId string, deviceNos []string) error {
 	query := func(c *mgo.Collection) error {
 		selector := bson.M{"user_id": bson.ObjectIdHex(userId)}
-		update := bson.M{"$set": bson.M{"device_ids": deviceIds}}
+		update := bson.M{"$set": bson.M{"related_devices": deviceNos}}
 		_, err := c.Upsert(selector, update)
 		return err
 	}
@@ -484,6 +487,7 @@ func fetchPagingUserList(operator model.User, page, size int) ([]model.TempUser,
 
 	query := func(c *mgo.Collection) error {
 		pipeline := []bson.M{
+			bson.M{"$sort": bson.M{"update_time": -1}},
 			bson.M{"$skip": page * size},
 			bson.M{"$limit": size},
 			bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency_docs"}},
@@ -514,7 +518,7 @@ func fetchPagingUserList(operator model.User, page, size int) ([]model.TempUser,
 func fetchDeviceCheckListBy(user model.User) ([]model.DeviceCheck, error) {
 
 	// 1、先获取该用户机构下未被删除的所有设备
-	totalDevices, err := fetchDeviceListInAgecy(user.AgencyId)
+	totalDevices, err := fetchDeviceListInAgency(user.AgencyId.Hex())
 
 	// 2、再获取该用户可操作的设备列表
 	deviceDocs, err := fetchDeviceListInUsed(user.UserId)
@@ -524,13 +528,13 @@ func fetchDeviceCheckListBy(user model.User) ([]model.DeviceCheck, error) {
 	for i := 0; i < len(totalDevices); i++ {
 		temp := totalDevices[i]
 		var deviceCheck model.DeviceCheck
-		deviceCheck.DeviceId = temp.DeviceId
+		deviceCheck.DeviceNo = temp.DeviceNo
 		deviceCheck.DeviceName = temp.DeviceName
 		deviceCheck.Check = false
 		for j := 0; j < len(deviceDocs); j++ {
 			usedDevice := deviceDocs[j].UsableDevices[0]
-			if len(usedDevice.DeviceId) > 0 && usedDevice.Status > config.DEVICE_STATUS_INVALID {
-				if usedDevice.DeviceId == temp.DeviceId {
+			if len(usedDevice.DeviceNo) > 0 && usedDevice.Status > config.DEVICE_STATUS_INVALID {
+				if usedDevice.DeviceNo == temp.DeviceNo {
 					deviceCheck.Check = true
 					break
 				}
@@ -542,26 +546,17 @@ func fetchDeviceCheckListBy(user model.User) ([]model.DeviceCheck, error) {
 	return deviceCheckList, err
 }
 
-func fetchDeviceListInAgecy(agencyId bson.ObjectId) ([]model.Device, error) {
-	var devices []model.Device
-	query := func(c *mgo.Collection) error {
-		selector := bson.M{"agency_id": agencyId, "status": bson.M{"$gt": config.DEVICE_STATUS_INVALID}}
-		return c.Find(selector).All(&devices)
-	}
-	err := SharedQuery(T_DEVICE, query)
-	return devices, err
-}
-
 func fetchDeviceListInUsed(userId bson.ObjectId) ([]model.TempUser, error) {
 	var usedDevices []model.TempUser
 	query := func(c *mgo.Collection) error {
 		pipeline := []bson.M{
+			bson.M{"$sort": bson.M{"update_time": -1}},
 			bson.M{"$match": bson.M{"_id": userId}},
-			bson.M{"$unwind": "$device_ids"},
-			bson.M{"$lookup": bson.M{"from": T_DEVICE, "localField": "device_ids", "foreignField": "_id", "as": "device_docs"}},
+			bson.M{"$unwind": "$related_devices"},
+			bson.M{"$lookup": bson.M{"from": T_DEVICE, "localField": "related_devices", "foreignField": "device_no", "as": "device_docs"}},
 			bson.M{"$project": bson.M{
 				"_id":                     1,
-				"device_docs._id":         1,
+				"device_docs.device_no":   1,
 				"device_docs.device_name": 1,
 				"device_docs.latitude":    1,
 				"device_docs.longitude":   1,

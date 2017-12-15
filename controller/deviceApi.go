@@ -25,8 +25,8 @@ func AddDevice(w http.ResponseWriter, r *http.Request) {
 	json.Unmarshal(body, &req)
 
 	// 校验请求参数
-	if len(req.DeviceId) == 0 || len(req.DeviceName) == 0 {
-		WriteData(w, config.InvalidParameterValue)
+	if len(req.DeviceNo) == 0 || len(req.DeviceName) == 0 {
+		WriteData(w, config.NewError(config.InvalidParameterValue))
 		return
 	}
 
@@ -38,7 +38,7 @@ func AddDevice(w http.ResponseWriter, r *http.Request) {
 
 	// 验证Token的有效性
 	if !ValidToken(operator, req.Token) {
-		WriteData(w, config.InvalidToken)
+		WriteData(w, config.NewError(config.InvalidToken))
 		return
 	}
 
@@ -49,8 +49,8 @@ func AddDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证需要添加的设备是否存在，存在则不能重复添加
-	device, err := queryDeviceBaseInfo(req.DeviceId)
-	if err == nil && len(device.DeviceId) > 0 {
+	device, err := queryDeviceBaseInfo(req.DeviceNo)
+	if err == nil && len(device.DeviceNo) > 0 {
 		panic(err)
 	}
 
@@ -61,7 +61,7 @@ func AddDevice(w http.ResponseWriter, r *http.Request) {
 
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
-		InsertOperateLog(model.OPERATE_TYPE_ADD, model.OPERATE_TARGET_DEVICE, operator, req.DeviceId, r.RemoteAddr)
+		InsertOperateLog(model.OPERATE_TYPE_ADD, model.OPERATE_TARGET_DEVICE, operator, req.DeviceNo, r.RemoteAddr)
 	}
 
 	// 返回成功消息
@@ -86,7 +86,7 @@ func RegisterDevice(w http.ResponseWriter, r *http.Request) {
 	json.Unmarshal(body, &req)
 
 	// 验证需要添加的设备是否存在，存在则不能重复添加
-	device, err := queryDeviceBaseInfo(req.DeviceId)
+	device, err := queryDeviceBaseInfo(req.DeviceNo)
 	if !ExistDevice(device) {
 		err = addDeviceInfo(req)
 	} else {
@@ -99,7 +99,7 @@ func RegisterDevice(w http.ResponseWriter, r *http.Request) {
 
 	// 记录消息日志
 	if config.Logger.EnableMessageLog {
-		InsertMessageLog(model.MESSAGE_TYPE_STATUS, req.DeviceId, string(body), r.RemoteAddr)
+		InsertMessageLog(model.MESSAGE_TYPE_STATUS, req.DeviceNo, string(body), r.RemoteAddr)
 	}
 
 	// 返回成功消息
@@ -115,7 +115,7 @@ func DeleteDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	operatorId := r.URL.Query().Get("operator_id")
-	deviceId := r.URL.Query().Get("device_id")
+	deviceNo := r.URL.Query().Get("device_no")
 	token := r.URL.Query().Get("token")
 
 	// 验证操作人是否存在
@@ -126,7 +126,7 @@ func DeleteDevice(w http.ResponseWriter, r *http.Request) {
 
 	// 验证Token的有效性
 	if !ValidToken(operator, token) {
-		WriteData(w, config.InvalidToken)
+		WriteData(w, config.NewError(config.InvalidToken))
 		return
 	}
 
@@ -137,19 +137,19 @@ func DeleteDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 验证需要删除的设备是否存在
-	device, err := queryDeviceBaseInfo(deviceId)
+	device, err := queryDeviceBaseInfo(deviceNo)
 	if err != nil {
 		panic(err)
 	}
 
-	err = deleteDeviceByID(device.DeviceId)
+	err = deleteDeviceByNO(device.DeviceNo)
 	if err != nil {
 		panic(err)
 	}
 
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
-		InsertOperateLog(model.OPERATE_TYPE_DELETE, model.OPERATE_TARGET_DEVICE, operator, deviceId, r.RemoteAddr)
+		InsertOperateLog(model.OPERATE_TYPE_DELETE, model.OPERATE_TARGET_DEVICE, operator, deviceNo, r.RemoteAddr)
 	}
 
 	// 返回成功消息
@@ -176,12 +176,12 @@ func EditDevice(w http.ResponseWriter, r *http.Request) {
 
 	// 验证Token的有效性
 	if !ValidToken(operator, req.Token) {
-		WriteData(w, config.InvalidToken)
+		WriteData(w, config.NewError(config.InvalidToken))
 		return
 	}
 
 	// 验证需要修改的设备是否存在
-	device, err := queryDeviceBaseInfo(req.DeviceId)
+	device, err := queryDeviceBaseInfo(req.DeviceNo)
 	if err != nil {
 		panic(err)
 	}
@@ -200,7 +200,7 @@ func EditDevice(w http.ResponseWriter, r *http.Request) {
 
 	// 记录操作日志
 	if config.Logger.EnableOperateLog {
-		InsertOperateLog(model.OPERATE_TYPE_UPDATE, model.OPERATE_TARGET_DEVICE, operator, req.DeviceId, r.RemoteAddr)
+		InsertOperateLog(model.OPERATE_TYPE_UPDATE, model.OPERATE_TARGET_DEVICE, operator, req.DeviceNo, r.RemoteAddr)
 	}
 
 	// 返回成功消息
@@ -231,7 +231,7 @@ func FetchDeviceList(w http.ResponseWriter, r *http.Request) {
 
 	// 验证Token的有效性
 	if !ValidToken(operator, token) {
-		WriteData(w, config.InvalidToken)
+		WriteData(w, config.NewError(config.InvalidToken))
 		return
 	}
 
@@ -243,7 +243,7 @@ func FetchDeviceList(w http.ResponseWriter, r *http.Request) {
 		for i := 0; i < len(usedDevices); i++ {
 			temp := usedDevices[i].UsableDevices[0]
 			var device model.Device
-			device.DeviceId = temp.DeviceId
+			device.DeviceNo = temp.DeviceNo
 			device.DeviceName = temp.DeviceName
 			device.Latitude = temp.Latitude
 			device.Longitude = temp.Longitude
@@ -257,7 +257,7 @@ func FetchDeviceList(w http.ResponseWriter, r *http.Request) {
 		for i := 0; i < len(tempDevices); i++ {
 			temp := tempDevices[i]
 			var device model.Device
-			device.DeviceId = temp.DeviceId
+			device.DeviceNo = temp.DeviceNo
 			device.DeviceName = temp.DeviceName
 			device.AgencyId = temp.AgencyId
 			device.Latitude = temp.Latitude
@@ -293,7 +293,7 @@ func GetDeviceInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	operatorId := r.URL.Query().Get("operator_id")
-	deviceId := r.URL.Query().Get("device_id")
+	deviceNo := r.URL.Query().Get("device_no")
 	token := r.URL.Query().Get("token")
 
 	// 验证操作人是否存在
@@ -304,18 +304,18 @@ func GetDeviceInfo(w http.ResponseWriter, r *http.Request) {
 
 	// 验证Token的有效性
 	if !ValidToken(operator, token) {
-		WriteData(w, config.InvalidToken)
+		WriteData(w, config.NewError(config.InvalidToken))
 		return
 	}
 
 	// 验证需要查询的设备是否存在
-	temp, err := fetchDeviceInfo(deviceId)
+	temp, err := fetchDeviceInfo(deviceNo)
 	if err != nil {
 		panic(err)
 	}
 
 	var device model.Device
-	device.DeviceId = temp.DeviceId
+	device.DeviceNo = temp.DeviceNo
 	device.DeviceName = temp.DeviceName
 	device.AgencyId = temp.AgencyId
 	device.Latitude = temp.Latitude
@@ -329,7 +329,7 @@ func GetDeviceInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !ExistDevice(device) {
-		WriteData(w, config.DeviceHasNotExists)
+		WriteData(w, config.NewError(config.DeviceHasNotExists))
 		return
 	}
 
@@ -343,11 +343,11 @@ func GetDeviceInfo(w http.ResponseWriter, r *http.Request) {
 
 ////=========== Private Methods ===========
 
-func queryDeviceBaseInfo(deviceId string) (model.Device, error) {
+func queryDeviceBaseInfo(deviceNo string) (model.Device, error) {
 	var device model.Device
 	query := func(c *mgo.Collection) error {
 		selector := bson.M{
-			"_id": bson.ObjectIdHex(deviceId),
+			"device_no": deviceNo,
 			"status": bson.M{"$gt": config.DEVICE_STATUS_INVALID},
 		}
 		return c.Find(selector).One(&device)
@@ -357,35 +357,46 @@ func queryDeviceBaseInfo(deviceId string) (model.Device, error) {
 }
 
 func addDeviceInfo(req model.DeviceReq) error {
+
+	var status int64
+	if len(req.AgencyId) > 0 {
+		status = config.DEVICE_STATUS_NORMAL
+	} else {
+		status = config.DEVICE_STATUS_UNALLOC
+	}
+
 	query := func(c *mgo.Collection) error {
 		insert := bson.M{
-			"_id":         bson.ObjectIdHex(req.DeviceId),
+			"device_no":   req.DeviceNo,
 			"device_name": req.DeviceName,
 			"agency_id":   bson.ObjectIdHex(req.AgencyId),
 			"latitude":    req.Latitude,
 			"longitude":   req.Longitude,
-			"status":      config.DEVICE_STATUS_NORMAL,
-			"createtime":  time.Now().Unix(),
-			"updatetime":  time.Now().Unix(),
+			"status":      status,
+			"create_time":  time.Now().Unix(),
+			"update_time":  time.Now().Unix(),
 		}
 		return c.Insert(insert)
 	}
 	return SharedQuery(T_DEVICE, query)
 }
 
-func deleteDeviceByID(deviceId bson.ObjectId) error {
+func deleteDeviceByNO(deviceNo string) error {
 	query := func(c *mgo.Collection) error {
+		selector := bson.M{"device_no": deviceNo}
 		update := bson.M{"$set": bson.M{"status": config.DEVICE_STATUS_INVALID}}
-		return c.UpdateId(deviceId, update)
+		return c.Update(selector, update)
 	}
 	return SharedQuery(T_DEVICE, query)
 }
 
 func updateDeviceInfo(req model.DeviceReq) error {
 
+	selector := bson.M{"device_no": req.DeviceNo}
+
 	set := make(bson.M)
 	set["status"] = req.Status
-	set["updatetime"] = time.Now().Unix()
+	set["update_time"] = time.Now().Unix()
 	if len(req.DeviceName) > 0 {
 		set["device_name"] = req.DeviceName
 	}
@@ -403,7 +414,7 @@ func updateDeviceInfo(req model.DeviceReq) error {
 		update := bson.M{
 			"$set": set,
 		}
-		return c.UpdateId(bson.ObjectIdHex(req.DeviceId), update)
+		return c.Update(selector, update)
 	}
 	return SharedQuery(T_DEVICE, query)
 }
@@ -415,11 +426,12 @@ func fetchPagingDeviceList(operator model.User, page, size int) ([]model.TempDev
 	var tempDevices []model.TempDevice
 	query := func(c *mgo.Collection) error {
 		pipeline := []bson.M{
+			bson.M{"$sort": bson.M{"update_time": -1}},
 			bson.M{"$skip": page * size},
 			bson.M{"$limit": size},
 			bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency_docs"}},
 			bson.M{"$project": bson.M{
-				"_id":          1,
+				"device_no":    1,
 				"device_name":  1,
 				"agency_id":    1,
 				"latitude":     1,
@@ -439,14 +451,14 @@ func fetchPagingDeviceList(operator model.User, page, size int) ([]model.TempDev
 	return tempDevices, err
 }
 
-func fetchDeviceInfo(deviceId string) (model.TempDevice, error) {
+func fetchDeviceInfo(deviceNo string) (model.TempDevice, error) {
 	var tempDevice model.TempDevice
 	query := func(c *mgo.Collection) error {
 		pipeline := []bson.M{
-			bson.M{"$match": bson.M{"_id": bson.ObjectIdHex(deviceId)}},
+			bson.M{"$match": bson.M{"device_no": deviceNo}},
 			bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency_docs"}},
 			bson.M{"$project": bson.M{
-				"_id":          1,
+				"device_no":    1,
 				"device_name":  1,
 				"agency_id":    1,
 				"latitude":     1,

@@ -209,12 +209,12 @@ func InsertOperateLog(mode int64, target int64, operator model.User, object stri
 }
 
 // 插入消息日志
-func InsertMessageLog(msgType int64, deviceId string, content string, ipaddr string) bool {
+func InsertMessageLog(msgType int64, deviceNo string, content string, ipaddr string) bool {
 	query := func(c *mgo.Collection) error {
 		selector := bson.M{
 			"type":        msgType,
 			"type_desc":   msgTypeDesc(msgType),
-			"device_id":   deviceId,
+			"device_no":   deviceNo,
 			"content":     content,
 			"create_time": time.Now().Unix(),
 			"source_ip":   ipaddr,
@@ -242,9 +242,9 @@ func fetchPagingLoginLogs(operator model.User, page, size int) ([]model.TempLogi
 
 	query := func(c *mgo.Collection) error {
 		pipeline := []bson.M{
+			bson.M{"$sort": bson.M{"create_time": -1}},
 			bson.M{"$skip": page * size},
 			bson.M{"$limit": size},
-			bson.M{"$sort": bson.M{"create_time": -1}},
 			bson.M{"$lookup": bson.M{"from": T_USER, "localField": "user_id", "foreignField": "_id", "as": "user_docs"}},
 			bson.M{"$project": bson.M{
 				"user_id":     1,
@@ -276,9 +276,9 @@ func fetchPagingOperateLogs(operator model.User, page, size int) ([]model.TempOp
 
 	query := func(c *mgo.Collection) error {
 		pipeline := []bson.M{
+			bson.M{"$sort": bson.M{"create_time": -1}},
 			bson.M{"$skip": page * size},
 			bson.M{"$limit": size},
-			bson.M{"$sort": bson.M{"create_time": -1}},
 			bson.M{"$lookup": bson.M{"from": T_USER, "localField": "operator_id", "foreignField": "_id", "as": "user_docs"}},
 			bson.M{"$project": bson.M{
 				"type":        1,
@@ -311,7 +311,7 @@ func fetchPagingMessageLogs(operator model.User, page, size int) ([]model.Messag
 	ValidPageValue(&page)
 
 	query := func(c *mgo.Collection) error {
-		return c.Find(nil).Skip(page * size).Limit(size).Sort("-create_time").All(&loglist)
+		return c.Find(nil).Sort("-create_time").Skip(page * size).Limit(size).All(&loglist)
 	}
 	err := SharedQuery(T_MESSAGE_LOG, query)
 	return loglist, err

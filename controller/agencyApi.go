@@ -27,7 +27,7 @@ func AddAgency(w http.ResponseWriter, r *http.Request) {
 	// 验证数据是否有效
 	//if len(req.AgencyName) == 0 || len(req.ContactName) == 0 || len(req.ContactNumber) == 0 || len(req.ContactAddr) == 0 {
 	if len(req.AgencyName) == 0 {
-		WriteData(w, config.InvalidParameterValue)
+		WriteData(w, config.NewError(config.InvalidParameterValue))
 		return
 	}
 
@@ -39,7 +39,7 @@ func AddAgency(w http.ResponseWriter, r *http.Request) {
 
 	// 验证Token的有效性
 	if !ValidToken(operator, req.Token) {
-		WriteData(w, config.InvalidToken)
+		WriteData(w, config.NewError(config.InvalidToken))
 		return
 	}
 
@@ -52,7 +52,7 @@ func AddAgency(w http.ResponseWriter, r *http.Request) {
 	// 验证被添加的组织机构是否存在
 	agency, err := queryAgencyInfoByName(req.AgencyName)
 	if ExistAgency(agency) {
-		WriteData(w, config.AgencyHasAlreadyExists)
+		WriteData(w, config.NewError(config.AgencyHasAlreadyExists))
 		return
 	}
 
@@ -90,7 +90,7 @@ func DeleteAgency(w http.ResponseWriter, r *http.Request) {
 
 	// 验证Token的有效性
 	if !ValidToken(operator, token) {
-		WriteData(w, config.InvalidToken)
+		WriteData(w, config.NewError(config.InvalidToken))
 		return
 	}
 
@@ -138,7 +138,7 @@ func EditAgency(w http.ResponseWriter, r *http.Request) {
 
 	// 校验请求参数
 	if len(req.AgencyName) == 0 {
-		WriteData(w, config.InvalidParameterValue)
+		WriteData(w, config.NewError(config.InvalidParameterValue))
 		return
 	}
 
@@ -150,7 +150,7 @@ func EditAgency(w http.ResponseWriter, r *http.Request) {
 
 	// 验证Token的有效性
 	if !ValidToken(operator, req.Token) {
-		WriteData(w, config.InvalidToken)
+		WriteData(w, config.NewError(config.InvalidToken))
 		return
 	}
 
@@ -204,7 +204,7 @@ func FetchAgencyList(w http.ResponseWriter, r *http.Request) {
 
 	// 验证Token的有效性
 	if !ValidToken(operator, token) {
-		WriteData(w, config.InvalidToken)
+		WriteData(w, config.NewError(config.InvalidToken))
 		return
 	}
 
@@ -243,7 +243,7 @@ func GetAgencyInfo(w http.ResponseWriter, r *http.Request) {
 
 	// 验证Token的有效性
 	if !ValidToken(operator, token) {
-		WriteData(w, config.InvalidToken)
+		WriteData(w, config.NewError(config.InvalidToken))
 		return
 	}
 
@@ -286,7 +286,7 @@ func FetchAgencyDevices(w http.ResponseWriter, r *http.Request) {
 
 	// 验证Token的有效性
 	if !ValidToken(operator, token) {
-		WriteData(w, config.InvalidToken)
+		WriteData(w, config.NewError(config.InvalidToken))
 		return
 	}
 
@@ -337,8 +337,8 @@ func addAgencyInfo(req model.AgencyReq) error {
 			"contact_number": req.ContactNumber,
 			"contact_addr":   req.ContactAddr,
 			"status":         config.AGENCY_STATUS_NORMAL,
-			"createtime":     time.Now().Unix(),
-			"updatetime":     time.Now().Unix(),
+			"create_time":     time.Now().Unix(),
+			"update_time":     time.Now().Unix(),
 		}
 		return c.Insert(insert)
 	}
@@ -369,7 +369,7 @@ func updateAgencyInfo(req model.AgencyReq) error {
 
 	set := make(bson.M)
 	set["status"] = req.Status
-	set["updatetime"] = time.Now().Unix()
+	set["update_time"] = time.Now().Unix()
 	if len(req.AgencyName) > 0 {
 		set["agency_name"] = req.AgencyName
 	}
@@ -402,7 +402,7 @@ func fetchPagingAgencyList(page, size int) ([]model.Agency, error) {
 	var agencyList []model.Agency
 	query := func(c *mgo.Collection) error {
 		selector := bson.M{"status": bson.M{"$gt": config.AGENCY_STATUS_INVALID}}
-		return c.Find(selector).Skip(page * size).Limit(size).All(&agencyList)
+		return c.Find(selector).Sort("-update_time").Skip(page * size).Limit(size).All(&agencyList)
 	}
 	err := SharedQuery(T_AGENCY, query)
 	return agencyList, err
@@ -411,7 +411,7 @@ func fetchPagingAgencyList(page, size int) ([]model.Agency, error) {
 func fetchDeviceListInAgency(agencyId string) ([]model.Device, error) {
 	var devlist []model.Device
 	query := func(c *mgo.Collection) error {
-		return c.Find(bson.M{"agency_id": bson.ObjectIdHex(agencyId)}).All(&devlist)
+		return c.Find(bson.M{"agency_id": bson.ObjectIdHex(agencyId)}).Sort("-create_time").All(&devlist)
 	}
 	err := SharedQuery(T_DEVICE, query)
 	return devlist, err

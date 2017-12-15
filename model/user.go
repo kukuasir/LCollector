@@ -58,7 +58,7 @@ type UserReq struct {
 	Role       string   `json:"role"`        // 角色
 	Priority   string   `json:"priority"`    // 设备查看方式的优先级
 	Status     int64    `json:"status"`      // 状态
-	DeviceIds  []string `json:"device_ids"`  // 可操作的设备ID列表
+	DeviceNos  []string `json:"device_nos"`  // 可操作的设备ID列表
 }
 
 /** 用户可操作或查看的设备关联信息 */

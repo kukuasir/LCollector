@@ -68,7 +68,7 @@ func ExistAgency(agency model.Agency) bool {
 
 // 判断设备是否存在
 func ExistDevice(device model.Device) bool {
-	return len(device.DeviceId) > 0 && device.Status > config.DEVICE_STATUS_INVALID
+	return len(device.DeviceNo) > 0 && device.Status > config.DEVICE_STATUS_INVALID
 }
 
 // 验证是否存在该用户

@@ -4,7 +4,7 @@ import "gopkg.in/mgo.v2/bson"
 
 /** 设备信息 */
 type Device struct {
-	DeviceId   bson.ObjectId `json:"device_id" bson:"_id,omitempty"`            // 设备ID
+	DeviceNo   string        `json:"device_no" bson:"device_no"`                // 设备编号
 	DeviceName string        `json:"device_name" bson:"device_name"`            // 设备名称
 	AgencyId   bson.ObjectId `json:"agency_id" bson:"agency_id"`                // 所属机构ID
 	AgencyName string        `json:"agency_name,omitempty", bson:"agency_name"` // 所属组织机构名称
@@ -18,7 +18,7 @@ type Device struct {
 
 /** 临时-设备与组织机构关联信息 */
 type TempDevice struct {
-	DeviceId    bson.ObjectId `json:"device_id" bson:"_id,omitempty"`   // 设备ID
+	DeviceNo    string        `json:"device_no" bson:"device_no"`       // 设备编号
 	DeviceName  string        `json:"device_name" bson:"device_name"`   // 设备名称
 	AgencyId    bson.ObjectId `json:"agency_id" bson:"agency_id"`       // 所属机构ID
 	Latitude    float64       `json:"latitude"`                         // 维度
@@ -31,7 +31,7 @@ type TempDevice struct {
 
 /** 设备 */
 type DeviceCheck struct {
-	DeviceId   bson.ObjectId `json:"device_id" bson:"_id,omitempty"` // 设备ID
+	DeviceNo   string        `json:"device_no" bson:"device_no"`     // 设备编号
 	DeviceName string        `json:"device_name" bson:"device_name"` // 设备名称
 	Check      bool          `json:"check"`                          // 是否选中
 }
@@ -39,7 +39,7 @@ type DeviceCheck struct {
 /** 用于添加或修改设备信息请求的结构体 */
 type DeviceReq struct {
 	OperatorId string  `json:"operator_id"` // 操作人员的ID
-	DeviceId   string  `json:"device_id"`   // 设备编号
+	DeviceNo   string  `json:"device_no"`   // 设备编号
 	Token      string  `json:"token"`       // Token
 	DeviceName string  `json:"device_name"` // 设备名称
 	AgencyId   string  `json:"agency_id"`   // 所属机构ID
