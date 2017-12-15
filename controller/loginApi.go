@@ -15,6 +15,11 @@ import (
 
 func Login(w http.ResponseWriter, r *http.Request) {
 
+	if strings.Compare(r.Method, "OPTIONS") == 0 {
+		WriteData(w, config.Success)
+		return
+	}
+
 	body, _ := ioutil.ReadAll(r.Body)
 	var loginReq model.LoginReq
 	json.Unmarshal(body, &loginReq)

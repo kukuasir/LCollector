@@ -15,6 +15,11 @@ import (
 
 func AddDevice(w http.ResponseWriter, r *http.Request) {
 
+	if strings.Compare(r.Method, "OPTIONS") == 0 {
+		WriteData(w, config.Success)
+		return
+	}
+
 	body, _ := ioutil.ReadAll(r.Body)
 	var req model.DeviceReq
 	json.Unmarshal(body, &req)
@@ -66,6 +71,11 @@ func AddDevice(w http.ResponseWriter, r *http.Request) {
 
 func RegisterDevice(w http.ResponseWriter, r *http.Request) {
 
+	if strings.Compare(r.Method, "OPTIONS") == 0 {
+		WriteData(w, config.Success)
+		return
+	}
+
 	if strings.Compare(r.Method, "POST") != 0 {
 		WriteData(w, config.NewError(config.UnsupportedRequestMethod))
 		return
@@ -98,6 +108,11 @@ func RegisterDevice(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteDevice(w http.ResponseWriter, r *http.Request) {
+
+	if strings.Compare(r.Method, "OPTIONS") == 0 {
+		WriteData(w, config.Success)
+		return
+	}
 
 	operatorId := r.URL.Query().Get("operator_id")
 	deviceId := r.URL.Query().Get("device_id")
@@ -144,6 +159,11 @@ func DeleteDevice(w http.ResponseWriter, r *http.Request) {
 
 func EditDevice(w http.ResponseWriter, r *http.Request) {
 
+	if strings.Compare(r.Method, "OPTIONS") == 0 {
+		WriteData(w, config.Success)
+		return
+	}
+
 	body, _ := ioutil.ReadAll(r.Body)
 	var req model.DeviceReq
 	json.Unmarshal(body, &req)
@@ -189,6 +209,11 @@ func EditDevice(w http.ResponseWriter, r *http.Request) {
 }
 
 func FetchDeviceList(w http.ResponseWriter, r *http.Request) {
+
+	if strings.Compare(r.Method, "OPTIONS") == 0 {
+		WriteData(w, config.Success)
+		return
+	}
 
 	operatorId := r.URL.Query().Get("operator_id")
 	token := r.URL.Query().Get("token")
@@ -261,6 +286,11 @@ func FetchDeviceList(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetDeviceInfo(w http.ResponseWriter, r *http.Request) {
+
+	if strings.Compare(r.Method, "OPTIONS") == 0 {
+		WriteData(w, config.Success)
+		return
+	}
 
 	operatorId := r.URL.Query().Get("operator_id")
 	deviceId := r.URL.Query().Get("device_id")

@@ -8,9 +8,15 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	"strings"
 )
 
 func FetchMessageLogList(w http.ResponseWriter, r *http.Request) {
+
+	if strings.Compare(r.Method, "OPTIONS") == 0 {
+		WriteData(w, config.Success)
+		return
+	}
 
 	operatorId := r.URL.Query().Get("operator_id")
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
@@ -49,6 +55,11 @@ func FetchMessageLogList(w http.ResponseWriter, r *http.Request) {
 }
 
 func FetchOperateLogList(w http.ResponseWriter, r *http.Request) {
+
+	if strings.Compare(r.Method, "OPTIONS") == 0 {
+		WriteData(w, config.Success)
+		return
+	}
 
 	operatorId := r.URL.Query().Get("operator_id")
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
@@ -102,6 +113,11 @@ func FetchOperateLogList(w http.ResponseWriter, r *http.Request) {
 }
 
 func FetchLoginLogList(w http.ResponseWriter, r *http.Request) {
+
+	if strings.Compare(r.Method, "OPTIONS") == 0 {
+		WriteData(w, config.Success)
+		return
+	}
 
 	operatorId := r.URL.Query().Get("operator_id")
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))

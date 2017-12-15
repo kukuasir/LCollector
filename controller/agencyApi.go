@@ -10,9 +10,15 @@ import (
 	"net/http"
 	"time"
 	"strconv"
+	"strings"
 )
 
 func AddAgency(w http.ResponseWriter, r *http.Request) {
+
+	if strings.Compare(r.Method, "OPTIONS") == 0 {
+		WriteData(w, config.Success)
+		return
+	}
 
 	body, _ := ioutil.ReadAll(r.Body)
 	var req model.AgencyReq
@@ -67,6 +73,11 @@ func AddAgency(w http.ResponseWriter, r *http.Request) {
 
 func DeleteAgency(w http.ResponseWriter, r *http.Request) {
 
+	if strings.Compare(r.Method, "OPTIONS") == 0 {
+		WriteData(w, config.Success)
+		return
+	}
+
 	operatorId := r.URL.Query().Get("operator_id")
 	agencyId := r.URL.Query().Get("agency_id")
 	token := r.URL.Query().Get("token")
@@ -115,6 +126,11 @@ func DeleteAgency(w http.ResponseWriter, r *http.Request) {
 }
 
 func EditAgency(w http.ResponseWriter, r *http.Request) {
+
+	if strings.Compare(r.Method, "OPTIONS") == 0 {
+		WriteData(w, config.Success)
+		return
+	}
 
 	body, _ := ioutil.ReadAll(r.Body)
 	var req model.AgencyReq
@@ -167,6 +183,11 @@ func EditAgency(w http.ResponseWriter, r *http.Request) {
 
 func FetchAgencyList(w http.ResponseWriter, r *http.Request) {
 
+	if strings.Compare(r.Method, "OPTIONS") == 0 {
+		WriteData(w, config.Success)
+		return
+	}
+
 	operatorId := r.URL.Query().Get("operator_id")
 	token := r.URL.Query().Get("token")
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
@@ -205,6 +226,11 @@ func FetchAgencyList(w http.ResponseWriter, r *http.Request) {
 
 func GetAgencyInfo(w http.ResponseWriter, r *http.Request) {
 
+	if strings.Compare(r.Method, "OPTIONS") == 0 {
+		WriteData(w, config.Success)
+		return
+	}
+
 	operatorId := r.URL.Query().Get("operator_id")
 	agencyId := r.URL.Query().Get("agency_id")
 	token := r.URL.Query().Get("token")
@@ -238,6 +264,11 @@ func GetAgencyInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func FetchAgencyDevices(w http.ResponseWriter, r *http.Request) {
+
+	if strings.Compare(r.Method, "OPTIONS") == 0 {
+		WriteData(w, config.Success)
+		return
+	}
 
 	operatorId := r.URL.Query().Get("operator_id")
 	agencyId := r.URL.Query().Get("agency_id")

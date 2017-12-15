@@ -11,9 +11,15 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	"strings"
 )
 
 func AddUser(w http.ResponseWriter, r *http.Request) {
+
+	if strings.Compare(r.Method, "OPTIONS") == 0 {
+		WriteData(w, config.Success)
+		return
+	}
 
 	body, _ := ioutil.ReadAll(r.Body)
 	var req model.UserReq
@@ -68,6 +74,11 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
 
+	if strings.Compare(r.Method, "OPTIONS") == 0 {
+		WriteData(w, config.Success)
+		return
+	}
+
 	operatorId := r.URL.Query().Get("operator_id")
 	userId := r.URL.Query().Get("user_id")
 	token := r.URL.Query().Get("token")
@@ -113,6 +124,11 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func EditUser(w http.ResponseWriter, r *http.Request) {
+
+	if strings.Compare(r.Method, "OPTIONS") == 0 {
+		WriteData(w, config.Success)
+		return
+	}
 
 	body, _ := ioutil.ReadAll(r.Body)
 	var req model.UserReq
@@ -173,6 +189,11 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 
 func UpdatePwd(w http.ResponseWriter, r *http.Request) {
 
+	if strings.Compare(r.Method, "OPTIONS") == 0 {
+		WriteData(w, config.Success)
+		return
+	}
+
 	body, _ := ioutil.ReadAll(r.Body)
 	var req model.UserReq
 	json.Unmarshal(body, &req)
@@ -217,6 +238,11 @@ func UpdatePwd(w http.ResponseWriter, r *http.Request) {
 }
 
 func FetchUserList(w http.ResponseWriter, r *http.Request) {
+
+	if strings.Compare(r.Method, "OPTIONS") == 0 {
+		WriteData(w, config.Success)
+		return
+	}
 
 	operatorId := r.URL.Query().Get("operator_id")
 	token := r.URL.Query().Get("token")
@@ -279,6 +305,11 @@ func FetchUserList(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetUserInfo(w http.ResponseWriter, r *http.Request) {
+
+	if strings.Compare(r.Method, "OPTIONS") == 0 {
+		WriteData(w, config.Success)
+		return
+	}
 
 	operatorId := r.URL.Query().Get("operator_id")
 	userId := r.URL.Query().Get("user_id")
