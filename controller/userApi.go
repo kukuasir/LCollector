@@ -31,7 +31,7 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 校验请求参数
-	if len(req.UserName) == 0 || len(req.Role) == 0 || len(req.AgencyId) == 0 {
+	if len(req.UserName) == 0 || len(req.Role) == 0 {
 		WriteData(w, config.NewError(config.InvalidParameterValue))
 		return
 	}

@@ -78,10 +78,10 @@ type TempLoginLog struct {
 type OperateLog struct {
 	Type         int64         `json:"type"`                           // 操作类型(1:添加 2:删除 3:修改)
 	Target       int64         `json:"target"`                         // 操作对象(1:用户 2:组织机构 3:设备 4:密码)
+	TargetObject string        `json:"object", bson:"object"`          // 操作对象的ID或名称
 	OperatorId   bson.ObjectId `json:"operator_id" bson:"operator_id"` // 操作人ID
 	OperatorName string        `json:"operator_name"`                  // 操作人名字
 	AgencyId     bson.ObjectId `json:"agency_id" bson:"agency_id"`     // 用户所属机构ID
-	TargetObject string        `json:"object", bson:"object"`          // 操作对象的ID或名称
 	CreateTime   int64         `json:"create_time" bson:"create_time"` // 创建时间
 	SourceIP     string        `json:"source_ip" bson:"source_ip"`     // 来源IP
 }
