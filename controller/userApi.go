@@ -10,8 +10,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	"time"
 	"strings"
+	"time"
 )
 
 func AddUser(w http.ResponseWriter, r *http.Request) {
@@ -394,17 +394,18 @@ func addUserInfo(req model.UserReq) error {
 
 	query := func(c *mgo.Collection) error {
 		insert := bson.M{
-			"user_name":  req.UserName,
-			"password":   util.MD5Encrypt(req.Password),
-			"gender":     req.Gender,
-			"birth":      req.Birth,
-			"mobile":     req.Mobile,
-			"agency_id":  bson.ObjectIdHex(req.AgencyId),
-			"role":       req.Role,
-			"priority":   req.Priority,
-			"status":     status,
-			"create_time": time.Now().Unix(),
-			"update_time": time.Now().Unix(),
+			"user_name":       req.UserName,
+			"password":        util.MD5Encrypt(req.Password),
+			"gender":          req.Gender,
+			"birth":           req.Birth,
+			"mobile":          req.Mobile,
+			"agency_id":       bson.ObjectIdHex(req.AgencyId),
+			"role":            req.Role,
+			"priority":        req.Priority,
+			"status":          status,
+			"related_devices": req.DeviceNos,
+			"create_time":     time.Now().Unix(),
+			"update_time":     time.Now().Unix(),
 		}
 		return c.Insert(insert)
 	}
@@ -564,7 +565,7 @@ func fetchDeviceListInUsed(userId bson.ObjectId) ([]model.TempUser, error) {
 			bson.M{"$unwind": "$related_devices"},
 			bson.M{"$lookup": bson.M{"from": T_DEVICE, "localField": "related_devices", "foreignField": "device_no", "as": "device_docs"}},
 			bson.M{"$project": bson.M{
-				"_id":                     1,
+				"_id": 1,
 				"device_docs.device_no":   1,
 				"device_docs.device_name": 1,
 				"device_docs.latitude":    1,

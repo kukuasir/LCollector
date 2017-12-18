@@ -46,19 +46,19 @@ type TempUser struct {
 
 /** 用于添加或修改用户信息请求的结构体 */
 type UserReq struct {
-	OperatorId string   `json:"operator_id"` // 操作人员的ID
-	UserId     string   `json:"user_id"`     // 目标用户ID
-	Token      string   `json:"token"`       // Token
-	UserName   string   `json:"user_name"`   // 用户账号
-	Password   string   `json:"password"`    // 用户密码
-	Gender     int64    `json:"gender"`      // 性别(1:男 2:女 -1:保密)
-	Birth      string   `json:"birth"`       // 出生年月
-	Mobile     string   `json:"mobile"`      // 联系方式
-	AgencyId   string   `json:"agency_id"`   // 所属机构ID
-	Role       string   `json:"role"`        // 角色
-	Priority   string   `json:"priority"`    // 设备查看方式的优先级
-	Status     int64    `json:"status"`      // 状态
-	DeviceNos  []string `json:"device_nos"`  // 可操作的设备ID列表
+	OperatorId string   `json:"operator_id"`     // 操作人员的ID
+	UserId     string   `json:"user_id"`         // 目标用户ID
+	Token      string   `json:"token"`           // Token
+	UserName   string   `json:"user_name"`       // 用户账号
+	Password   string   `json:"password"`        // 用户密码
+	Gender     int64    `json:"gender"`          // 性别(1:男 2:女 -1:保密)
+	Birth      string   `json:"birth"`           // 出生年月
+	Mobile     string   `json:"mobile"`          // 联系方式
+	AgencyId   string   `json:"agency_id"`       // 所属机构ID
+	Role       string   `json:"role"`            // 角色
+	Priority   string   `json:"priority"`        // 设备查看方式的优先级
+	Status     int64    `json:"status"`          // 状态
+	DeviceNos  []string `json:"related_devices"` // 可操作的设备编号列表
 }
 
 /** 用户可操作或查看的设备关联信息 */

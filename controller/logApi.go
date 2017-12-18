@@ -178,7 +178,7 @@ func FetchLoginLogList(w http.ResponseWriter, r *http.Request) {
 func InsertLoginLog(user model.User, ipaddr string) bool {
 	query := func(c *mgo.Collection) error {
 		selector := bson.M{
-			"user_id":     user.UserId,
+			"user_id":     user.UserId.Hex(),
 			"status":      user.Status,
 			"agency_id":   user.AgencyId,
 			"create_time": time.Now().Unix(),
