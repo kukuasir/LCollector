@@ -518,10 +518,10 @@ func fetchPagingUserList(operator model.User, page, size int) ([]model.TempUser,
 		if operator.Role == "admin" {
 			pipeline = append(pipeline, bson.M{"$match": bson.M{
 				"agency_id": operator.AgencyId,
-				"status": bson.M{"$gt": config.DEVICE_STATUS_INVALID},
+				"status": bson.M{"$gt": config.USER_STATUS_INVALID},
 			}})
 		} else {
-			pipeline = append(pipeline, bson.M{"$match": bson.M{"status": bson.M{"$gt": config.DEVICE_STATUS_INVALID}}})
+			pipeline = append(pipeline, bson.M{"$match": bson.M{"status": bson.M{"$gt": config.USER_STATUS_INVALID}}})
 		}
 		return c.Pipe(pipeline).All(&tempUsers)
 	}
