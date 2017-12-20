@@ -279,6 +279,7 @@ func FetchUserList(w http.ResponseWriter, r *http.Request) {
 		user.AgencyId = temp.AgencyId
 		user.Role = temp.Role
 		user.Status = temp.Status
+		user.StatusDesc = config.UserStatusDesc(temp.Status)
 		user.LastLoginTime = temp.LastLoginTime
 		user.LastLoginIP = temp.LastLoginIP
 		user.CreateTime = temp.CreateTime
@@ -390,6 +391,11 @@ func addUserInfo(req model.UserReq) error {
 		status = config.USER_STATUS_NORMAL
 	} else {
 		status = config.USER_STATUS_UNALLOC
+	}
+
+	// 如果优先级传入为空，设置默认值
+	if len(req.Priority) == 0 {
+		req.Priority = "123"
 	}
 
 	query := func(c *mgo.Collection) error {

@@ -31,9 +31,9 @@ type TempDevice struct {
 
 /** 设备 */
 type DeviceCheck struct {
-	DeviceNo   string        `json:"device_no" bson:"device_no"`     // 设备编号
-	DeviceName string        `json:"device_name" bson:"device_name"` // 设备名称
-	Check      bool          `json:"check"`                          // 是否选中
+	DeviceNo   string `json:"device_no" bson:"device_no"`     // 设备编号
+	DeviceName string `json:"device_name" bson:"device_name"` // 设备名称
+	Check      bool   `json:"check"`                          // 是否选中
 }
 
 /** 用于添加或修改设备信息请求的结构体 */
@@ -52,6 +52,12 @@ type DeviceReq struct {
 type DeviceListRet struct {
 	ResultInfo Result   `json:"result"` // 返回结果
 	DeviceList []Device `json:"datas"`  // 设备列表
+}
+
+/** Api返回的设备九宫格列表 */
+type DeviceGridRet struct {
+	ResultInfo Result     `json:"result"` // 返回结果
+	DeviceGrid [][]Device `json:"datas"`  // 设备列表
 }
 
 /** Api返回的设备信息 */

@@ -206,6 +206,20 @@ var routes = Routes{
 	},
 
 	Route{
+		"FetchGridDevices",
+		"OPTIONS",
+		"/device/grid",
+		FetchGridDevices,
+	},
+
+	Route{
+		"FetchGridDevices",
+		"GET",
+		"/device/grid",
+		FetchGridDevices,
+	},
+
+	Route{
 		"GetDeviceInfo",
 		"OPTIONS",
 		"/device/view",

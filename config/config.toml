@@ -17,6 +17,7 @@ website   = "http://www.wisdboat.com"
 server_port = ":8080"  #服务器端口
 valid_times = 7200     #设置Token有效期默认为2小时
 check_token = false    #是否需要校验token
+grid_column = 5        #九宫格列数
 
 [mongo]
 host     = "106.14.2.153:27017"

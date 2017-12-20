@@ -31,6 +31,7 @@ type systemConfig struct {
 	ServerPort string `toml:"server_port"` // API服务端口
 	ValidSecs  int64  `toml:"valid_times"` // Token有效时长
 	CheckToken bool   `toml:"check_token"` // 是否需要校验Token
+	GridColumn int    `toml:"grid_column"` // 九宫格每一行展示的个数
 }
 
 type mongoConfig struct {

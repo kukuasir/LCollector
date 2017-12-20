@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"math"
 )
 
 func AddDevice(w http.ResponseWriter, r *http.Request) {
@@ -249,6 +250,8 @@ func FetchDeviceList(w http.ResponseWriter, r *http.Request) {
 			device.Longitude = temp.Longitude
 			device.CreateTime = temp.CreateTime
 			device.UpdateTime = temp.UpdateTime
+			device.Status = temp.Status
+			device.StatusDesc = config.DeviceStatusDesc(temp.Status)
 			deviceList = append(deviceList, device)
 		}
 	} else {
@@ -264,6 +267,8 @@ func FetchDeviceList(w http.ResponseWriter, r *http.Request) {
 			device.Longitude = temp.Longitude
 			device.CreateTime = temp.CreateTime
 			device.UpdateTime = temp.UpdateTime
+			device.Status = temp.Status
+			device.StatusDesc = config.DeviceStatusDesc(temp.Status)
 			if len(temp.AgencyNames) > 0 {
 				device.AgencyName = temp.AgencyNames[0]
 			}
@@ -273,7 +278,7 @@ func FetchDeviceList(w http.ResponseWriter, r *http.Request) {
 
 	var totalCount int64
 	if page == 0 {
-		totalCount, err = GetCount(T_AGENCY)
+		totalCount, err = GetCount(T_DEVICE)
 	}
 
 	// 返回查询结果
@@ -283,6 +288,101 @@ func FetchDeviceList(w http.ResponseWriter, r *http.Request) {
 	deviceListRet.ResultInfo.Total = totalCount
 	deviceListRet.DeviceList = deviceList
 	WriteData(w, deviceListRet)
+}
+
+func FetchGridDevices(w http.ResponseWriter, r *http.Request) {
+
+	if strings.Compare(r.Method, "OPTIONS") == 0 {
+		WriteData(w, config.Success)
+		return
+	}
+
+	operatorId := r.URL.Query().Get("operator_id")
+	token := r.URL.Query().Get("token")
+	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
+	if size == 0 {
+		size = 20
+	}
+
+	// 验证操作人是否存在
+	operator, err := queryUserBaseInfo(operatorId)
+	if err != nil {
+		panic(err)
+	}
+
+	// 验证Token的有效性
+	if !ValidToken(operator, token) {
+		WriteData(w, config.NewError(config.InvalidToken))
+		return
+	}
+
+	var deviceGrid [][]model.Device
+
+	if operator.Role == "customer" {
+		usedDevices, _ := fetchDeviceListInUsed(operator.UserId)
+		totalCount := len(usedDevices)
+		column := config.System.GridColumn
+		maxRow := math.Ceil(float64(totalCount) / float64(column))
+		for i := 0; i < int(maxRow); i++ {
+			var deviceList []model.Device
+			for j := 0; j < column; j++ {
+				index := i * column + j
+				if index >= totalCount {
+					break
+				}
+				temp := usedDevices[index].UsableDevices[0]
+				var device model.Device
+				device.DeviceNo = temp.DeviceNo
+				device.DeviceName = temp.DeviceName
+				device.Latitude = temp.Latitude
+				device.Longitude = temp.Longitude
+				device.CreateTime = temp.CreateTime
+				device.UpdateTime = temp.UpdateTime
+				device.Status = temp.Status
+				deviceList = append(deviceList, device)
+			}
+			deviceGrid = append(deviceGrid, deviceList)
+		}
+	} else {
+		tempDevices, _ := fetchPagingDeviceList(operator, page, size)
+		totalCount := len(tempDevices)
+		column := config.System.GridColumn
+		maxRow := math.Ceil(float64(totalCount) / float64(column))
+		for i := 0; i < int(maxRow); i++ {
+			var deviceList []model.Device
+			for j := 0; j < column; j++ {
+				index := i * column + j
+				if index >= totalCount {
+					break
+				}
+				temp := tempDevices[index]
+				var device model.Device
+				device.DeviceNo = temp.DeviceNo
+				device.DeviceName = temp.DeviceName
+				device.Latitude = temp.Latitude
+				device.Longitude = temp.Longitude
+				device.CreateTime = temp.CreateTime
+				device.UpdateTime = temp.UpdateTime
+				device.Status = temp.Status
+				deviceList = append(deviceList, device)
+			}
+			deviceGrid = append(deviceGrid, deviceList)
+		}
+	}
+
+	var totalCount int64
+	if page == 0 {
+		totalCount, err = GetCount(T_DEVICE)
+	}
+
+	// 返回查询结果
+	var deviceGridRet model.DeviceGridRet
+	deviceGridRet.ResultInfo.Status = config.Success
+	deviceGridRet.ResultInfo.Message = config.TIPS_QUERY_SUCCEED
+	deviceGridRet.ResultInfo.Total = totalCount
+	deviceGridRet.DeviceGrid = deviceGrid
+	WriteData(w, deviceGridRet)
 }
 
 func GetDeviceInfo(w http.ResponseWriter, r *http.Request) {
