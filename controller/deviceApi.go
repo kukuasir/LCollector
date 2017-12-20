@@ -444,7 +444,12 @@ func fetchPagingDeviceList(operator model.User, page, size int) ([]model.TempDev
 			}},
 		}
 		if operator.Role == "admin" {
-			pipeline = append(pipeline, bson.M{"$match": bson.M{"agency_id": operator.AgencyId}})
+			pipeline = append(pipeline, bson.M{"$match": bson.M{
+				    "agency_id": operator.AgencyId,
+				    "status": bson.M{"$gt": config.DEVICE_STATUS_INVALID},
+				}})
+		} else {
+			pipeline = append(pipeline, bson.M{"$match": bson.M{"status": bson.M{"$gt": config.DEVICE_STATUS_INVALID}}})
 		}
 		return c.Pipe(pipeline).All(&tempDevices)
 	}
@@ -456,7 +461,7 @@ func fetchDeviceInfo(deviceNo string) (model.TempDevice, error) {
 	var tempDevice model.TempDevice
 	query := func(c *mgo.Collection) error {
 		pipeline := []bson.M{
-			bson.M{"$match": bson.M{"device_no": deviceNo}},
+			bson.M{"$match": bson.M{"device_no": deviceNo, "status": bson.M{"$gt": config.DEVICE_STATUS_INVALID}}},
 			bson.M{"$lookup": bson.M{"from": T_AGENCY, "localField": "agency_id", "foreignField": "_id", "as": "agency_docs"}},
 			bson.M{"$project": bson.M{
 				"device_no":    1,

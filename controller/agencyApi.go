@@ -136,12 +136,6 @@ func EditAgency(w http.ResponseWriter, r *http.Request) {
 	var req model.AgencyReq
 	json.Unmarshal(body, &req)
 
-	// 校验请求参数
-	if len(req.AgencyName) == 0 {
-		WriteData(w, config.NewError(config.InvalidParameterValue))
-		return
-	}
-
 	// 验证操作人是否存在
 	operator, err := queryUserBaseInfo(req.OperatorId)
 	if err != nil {
@@ -414,7 +408,8 @@ func fetchPagingAgencyList(page, size int) ([]model.Agency, error) {
 func fetchDeviceListInAgency(agencyId string) ([]model.Device, error) {
 	var devlist []model.Device
 	query := func(c *mgo.Collection) error {
-		return c.Find(bson.M{"agency_id": bson.ObjectIdHex(agencyId)}).Sort("-create_time").All(&devlist)
+		selector := bson.M{"agency_id": bson.ObjectIdHex(agencyId), "status": bson.M{"$gt": config.AGENCY_STATUS_INVALID}}
+		return c.Find(selector).Sort("-create_time").All(&devlist)
 	}
 	err := SharedQuery(T_DEVICE, query)
 	return devlist, err
